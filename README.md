@@ -2,7 +2,7 @@
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![Windows](https://img.shields.io/badge/platform-Windows%2010%2F11-brightgreen)
-[![Download](https://img.shields.io/badge/download-Release-orange)](https://github.com/YOUR_USERNAME/GoodbyeDPI-GUI/releases)
+[![Download](https://img.shields.io/badge/download-Release-orange)](https://github.com/ZvanTors/GoodByeDPI-GUI/releases)
 
 A clean and simple graphical interface for [GoodbyeDPI](https://github.com/ValdikSS/GoodbyeDPI) — the tool that bypasses Deep Packet Inspection (DPI) and unblocks websites.
 
@@ -26,9 +26,7 @@ No command lines, no manual configuration. Just click and browse.
 
 > *Replace the following with actual screenshots of your program*
 
-| Main Window |
-|-------------|
-| ![Main Window](screenshot.png)
+![Screenshot](Screenshot.png)
 
 *How to add screenshots: place your images in a `screenshots` folder and update the paths above.*
 
