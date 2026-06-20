@@ -24,11 +24,7 @@ No command lines, no manual configuration. Just click and browse.
 
 ## 📸 Screenshots
 
-> *Replace the following with actual screenshots of your program*
-
 ![Screenshot](Screenshot.png)
-
-*How to add screenshots: place your images in a `screenshots` folder and update the paths above.*
 
 ---
 
