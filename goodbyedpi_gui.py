@@ -2,17 +2,19 @@ import sys
 import os
 import subprocess
 import ctypes
-from PySide6.QtGui import QAction, QIcon
+import json
+import urllib.request
+import threading
 
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QTextEdit, QComboBox, QLineEdit,
     QCheckBox, QMessageBox, QGroupBox
 )
-from PySide6.QtCore import Qt, QProcess, QTimer, Signal, Slot
-from PySide6.QtGui import QAction
+from PySide6.QtCore import Qt, QProcess, Signal, Slot, QSettings, QUrl
+from PySide6.QtGui import QIcon, QDesktopServices
 
-# برای بسته‌بندی PyInstaller
+
 def resource_path(relative_path):
     """Get absolute path to resource, works for dev and for PyInstaller."""
     if getattr(sys, 'frozen', False):
@@ -21,62 +23,66 @@ def resource_path(relative_path):
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
-# مسیر فایل اجرایی GoodbyeDPI (همراه بسته)
+
 DPI_EXE = resource_path("goodbyedpi.exe")
+
+# 🔹 Current version of the GUI
+CURRENT_VERSION = "1.0.1"
+GITHUB_API_URL = "https://api.github.com/repos/ZvanTors/GoodByeDPI-GUI/releases/latest"
+RELEASES_URL = "https://github.com/ZvanTors/GoodByeDPI-GUI/releases"
+
 
 class GoodbyeDPIManager(QMainWindow):
     log_signal = Signal(str)
+    update_found_signal = Signal(str)
 
     def __init__(self):
         super().__init__()
-        icon_path = resource_path("logo.ico")
-        self.setWindowIcon(QIcon(icon_path))
         self.setWindowTitle("GoodByeDPI GUI")
+        self.setWindowIcon(QIcon(resource_path("logo.ico")))
         self.resize(680, 480)
 
         self.process = None
         self.is_running = False
 
-        # تنظیمات پایدار با QSettings
-        from PySide6.QtCore import QSettings
+        # Settings
         self.settings = QSettings("GoodbyeDPIManager", "GUI")
-        self.load_settings()
+        self.mode_index = self.settings.value("mode_index", 0, type=int)
+        self.custom_args = self.settings.value("custom_args", "", type=str)
 
-        # ویجت مرکزی
+        # Central widget
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QVBoxLayout(central_widget)
 
-        # === گروه تنظیمات ===
+        # --- Settings group ---
         settings_group = QGroupBox("DPI Circumvention Settings")
         settings_layout = QVBoxLayout()
         settings_group.setLayout(settings_layout)
 
-        # انتخاب حالت
         mode_layout = QHBoxLayout()
         mode_layout.addWidget(QLabel("Mode:"))
         self.mode_combo = QComboBox()
         self.mode_combo.addItems(["-6 (Recommended)", "-5 (General)", "Custom"])
+        self.mode_combo.setCurrentIndex(self.mode_index)
         mode_layout.addWidget(self.mode_combo)
         settings_layout.addLayout(mode_layout)
 
-        # پارامترهای دستی
         custom_layout = QHBoxLayout()
         custom_layout.addWidget(QLabel("Custom arguments:"))
-        self.custom_args_edit = QLineEdit()
+        self.custom_args_edit = QLineEdit(self.custom_args)
         self.custom_args_edit.setPlaceholderText("e.g. -f 2 -e 40 --native-frag --reverse-frag")
         custom_layout.addWidget(self.custom_args_edit)
         self.mode_combo.currentIndexChanged.connect(self.on_mode_changed)
         settings_layout.addLayout(custom_layout)
 
-        # اجرای خودکار با ویندوز (Task Scheduler)
         self.autostart_check = QCheckBox("Run on Windows startup (Task Scheduler)")
         self.autostart_check.stateChanged.connect(self.toggle_autostart)
         settings_layout.addWidget(self.autostart_check)
 
         main_layout.addWidget(settings_group)
 
-        # === کنترل‌ها ===
+        # --- Controls ---
         control_layout = QHBoxLayout()
         self.start_btn = QPushButton("▶ Start")
         self.start_btn.clicked.connect(self.start_goodbyedpi)
@@ -91,7 +97,7 @@ class GoodbyeDPIManager(QMainWindow):
         control_layout.addStretch()
         main_layout.addLayout(control_layout)
 
-        # === خروجی لاگ ===
+        # --- Output log ---
         log_group = QGroupBox("Output")
         log_layout = QVBoxLayout()
         log_group.setLayout(log_layout)
@@ -101,36 +107,29 @@ class GoodbyeDPIManager(QMainWindow):
         log_layout.addWidget(self.log_view)
         main_layout.addWidget(log_group)
 
-        # سیگنال لاگ
-        self.log_signal.connect(self.append_log)
+        # --- Bottom bar: version on left, credit on right ---
+        bottom_layout = QHBoxLayout()
+        self.version_label = QLabel(f"V{CURRENT_VERSION}")
+        self.version_label.setStyleSheet("color: #888; font-size: 9pt; padding: 2px 6px;")
+        bottom_layout.addWidget(self.version_label)
+        bottom_layout.addStretch()
+        credit_label = QLabel("Made with ❤️ by AmooReza (WhiteDNS)")
+        credit_label.setStyleSheet("color: #aaa; font-size: 8pt; padding: 2px 6px;")
+        bottom_layout.addWidget(credit_label)
+        main_layout.addLayout(bottom_layout)
 
-        # بارگذاری وضعیت اولیه
-        self.update_ui_from_settings()
+        # Connect signals
+        self.log_signal.connect(self.append_log)
+        self.update_found_signal.connect(self.show_update_notification)
+
+        # Initial UI state
+        self.update_autostart_check()
         self.on_mode_changed()
 
-    # ---- تنظیمات با QSettings ----
-    def load_settings(self):
-        """بارگذاری تنظیمات ذخیره‌شده"""
-        # حالت (0: -6, 1: -5, 2: custom)
-        self.mode_index = self.settings.value("mode_index", 0, type=int)
-        self.custom_args = self.settings.value("custom_args", "", type=str)
-        # وضعیت autostart از Task Scheduler خوانده می‌شود، نه از QSettings
+        # --- Check for updates in background ---
+        threading.Thread(target=self.check_for_updates, daemon=True).start()
 
-    def save_settings(self):
-        """ذخیره تنظیمات فعلی"""
-        self.settings.setValue("mode_index", self.mode_combo.currentIndex())
-        self.settings.setValue("custom_args", self.custom_args_edit.text())
-
-    def update_ui_from_settings(self):
-        """اعمال تنظیمات به ویجت‌ها"""
-        self.mode_combo.setCurrentIndex(self.mode_index)
-        self.custom_args_edit.setText(self.custom_args)
-        # به‌روزرسانی چک‌باکس autostart
-        self.autostart_check.blockSignals(True)
-        self.autostart_check.setChecked(self.is_autostart_enabled())
-        self.autostart_check.blockSignals(False)
-
-    # ---- منطق اجرای خودکار ----
+    # ---- Autostart ----
     def is_autostart_enabled(self):
         try:
             result = subprocess.run(
@@ -141,12 +140,15 @@ class GoodbyeDPIManager(QMainWindow):
         except:
             return False
 
+    def update_autostart_check(self):
+        self.autostart_check.blockSignals(True)
+        self.autostart_check.setChecked(self.is_autostart_enabled())
+        self.autostart_check.blockSignals(False)
+
     def toggle_autostart(self, state):
         if state:
-            # مسیر فایل اجرایی فعلی (در حالت بسته‌بندی sys.executable است)
             exe_path = sys.executable if getattr(sys, 'frozen', False) else sys.argv[0]
             task_name = "GoodbyeDPIManager"
-            # اگر قبلاً وظیفه‌ای وجود دارد، پاکش کن
             subprocess.run(["schtasks", "/delete", "/tn", task_name, "/f"], capture_output=True)
             try:
                 subprocess.run(
@@ -157,7 +159,6 @@ class GoodbyeDPIManager(QMainWindow):
                 QMessageBox.information(self, "Success", "Task created successfully.")
             except subprocess.CalledProcessError as e:
                 QMessageBox.critical(self, "Error", f"Failed to create task:\n{e.stderr}")
-                self.autostart_check.setChecked(False)
         else:
             try:
                 subprocess.run(
@@ -167,47 +168,41 @@ class GoodbyeDPIManager(QMainWindow):
                 QMessageBox.information(self, "Success", "Task removed.")
             except subprocess.CalledProcessError as e:
                 QMessageBox.critical(self, "Error", f"Failed to remove task:\n{e.stderr}")
-        # به‌روزرسانی چک‌باکس بعد از تغییر واقعی
-        self.autostart_check.blockSignals(True)
-        self.autostart_check.setChecked(self.is_autostart_enabled())
-        self.autostart_check.blockSignals(False)
+        self.update_autostart_check()
 
-    # ---- تغییر حالت ----
+    # ---- Mode ----
     def on_mode_changed(self):
-        custom_mode = self.mode_combo.currentIndex() == 2
-        self.custom_args_edit.setEnabled(custom_mode)
-        if not custom_mode:
+        custom = self.mode_combo.currentIndex() == 2
+        self.custom_args_edit.setEnabled(custom)
+        if not custom:
             self.custom_args_edit.clear()
 
-    # ---- شروع/توقف ----
+    # ---- Start/Stop ----
     def start_goodbyedpi(self):
         if self.is_running:
             return
 
-        # ذخیره تنظیمات
-        self.save_settings()
+        self.settings.setValue("mode_index", self.mode_combo.currentIndex())
+        self.settings.setValue("custom_args", self.custom_args_edit.text())
 
-        # ساخت لیست آرگومان‌ها
         args = []
-        mode_idx = self.mode_combo.currentIndex()
-        if mode_idx == 0:
+        idx = self.mode_combo.currentIndex()
+        if idx == 0:
             args = ["-6"]
-        elif mode_idx == 1:
+        elif idx == 1:
             args = ["-5"]
         else:
-            custom_text = self.custom_args_edit.text().strip()
-            if custom_text:
-                args = custom_text.split()
+            custom = self.custom_args_edit.text().strip()
+            if custom:
+                args = custom.split()
 
-        # مسیر فایل اجرایی (داخل بسته)
-        exe_path = DPI_EXE
-        if not os.path.exists(exe_path):
-            QMessageBox.critical(self, "Error", f"GoodbyeDPI executable not found:\n{exe_path}")
+        if not os.path.exists(DPI_EXE):
+            QMessageBox.critical(self, "Error", f"GoodbyeDPI executable not found:\n{DPI_EXE}")
             return
 
         try:
             self.process = QProcess(self)
-            self.process.setProgram(exe_path)
+            self.process.setProgram(DPI_EXE)
             self.process.setArguments(args)
             self.process.setProcessChannelMode(QProcess.MergedChannels)
             self.process.readyReadStandardOutput.connect(self.handle_output)
@@ -215,7 +210,7 @@ class GoodbyeDPIManager(QMainWindow):
             self.process.start()
 
             if not self.process.waitForStarted(3000):
-                QMessageBox.critical(self, "Error", "Failed to start GoodbyeDPI. Make sure you have administrator rights.")
+                QMessageBox.critical(self, "Error", "Failed to start. Run as Administrator!")
                 return
 
             self.is_running = True
@@ -225,7 +220,7 @@ class GoodbyeDPIManager(QMainWindow):
             self.status_label.setStyleSheet("color: green; font-weight: bold;")
             self.log_signal.emit("--- GoodbyeDPI started ---")
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Error starting GoodbyeDPI:\n{e}")
+            QMessageBox.critical(self, "Error", f"Error:\n{e}")
 
     def stop_goodbyedpi(self):
         if self.process and self.is_running:
@@ -252,7 +247,52 @@ class GoodbyeDPIManager(QMainWindow):
     def append_log(self, text):
         self.log_view.append(text)
 
-    # ---- بستن برنامه ----
+    # ---- Update checking ----
+    def check_for_updates(self):
+        """Run in a background thread: fetch the latest release tag from GitHub."""
+        try:
+            req = urllib.request.Request(GITHUB_API_URL, headers={
+                "Accept": "application/vnd.github.v3+json"
+            })
+            with urllib.request.urlopen(req, timeout=5) as response:
+                data = json.loads(response.read().decode())
+            latest_tag = data.get("tag_name", "")
+            if latest_tag:
+                latest_version = latest_tag.lstrip("v")
+                if self.is_newer_version(latest_version):
+                    self.update_found_signal.emit(latest_version)
+        except Exception:
+            pass
+
+    def is_newer_version(self, remote_version):
+        try:
+            current = tuple(map(int, CURRENT_VERSION.split(".")))
+            remote = tuple(map(int, remote_version.split(".")))
+            return remote > current
+        except:
+            return False
+
+    @Slot(str)
+    def show_update_notification(self, new_version):
+        """Show a message box with OK and Update buttons."""
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle("Update Available")
+        msg_box.setIcon(QMessageBox.Information)
+        msg_box.setText(
+            f"A new version of GoodByeDPI GUI is available!\n\n"
+            f"Current version: V{CURRENT_VERSION}\n"
+            f"Latest version: V{new_version}\n\n"
+            f"Do you want to visit the Releases page?"
+        )
+        ok_btn = msg_box.addButton("OK", QMessageBox.RejectRole)
+        update_btn = msg_box.addButton("Update", QMessageBox.AcceptRole)
+        msg_box.setDefaultButton(update_btn)
+        msg_box.exec()
+
+        if msg_box.clickedButton() == update_btn:
+            QDesktopServices.openUrl(QUrl(RELEASES_URL))
+
+    # ---- Window close ----
     def closeEvent(self, event):
         if self.is_running:
             reply = QMessageBox.question(self, "Confirm Exit",
@@ -268,7 +308,6 @@ class GoodbyeDPIManager(QMainWindow):
 
 
 if __name__ == "__main__":
-    # بررسی دسترسی ادمین
     if not ctypes.windll.shell32.IsUserAnAdmin():
         QMessageBox.critical(None, "Error", "This program must be run as Administrator!")
         sys.exit(1)
