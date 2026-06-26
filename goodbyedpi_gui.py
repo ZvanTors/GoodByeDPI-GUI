@@ -9,10 +9,10 @@ import threading
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QTextEdit, QComboBox, QLineEdit,
-    QCheckBox, QMessageBox, QGroupBox
+    QCheckBox, QMessageBox, QGroupBox, QMenu, QSystemTrayIcon
 )
 from PySide6.QtCore import Qt, QProcess, Signal, Slot, QSettings, QUrl
-from PySide6.QtGui import QIcon, QDesktopServices
+from PySide6.QtGui import QIcon, QDesktopServices, QAction
 
 
 def resource_path(relative_path):
@@ -27,7 +27,7 @@ def resource_path(relative_path):
 DPI_EXE = resource_path("goodbyedpi.exe")
 
 # 🔹 Current version of the GUI
-CURRENT_VERSION = "1.0.1"
+CURRENT_VERSION = "1.0.2"
 GITHUB_API_URL = "https://api.github.com/repos/ZvanTors/GoodByeDPI-GUI/releases/latest"
 RELEASES_URL = "https://github.com/ZvanTors/GoodByeDPI-GUI/releases"
 
@@ -49,6 +49,35 @@ class GoodbyeDPIManager(QMainWindow):
         self.settings = QSettings("GoodbyeDPIManager", "GUI")
         self.mode_index = self.settings.value("mode_index", 0, type=int)
         self.custom_args = self.settings.value("custom_args", "", type=str)
+
+        # ---- System Tray ----
+        self.tray_icon = QSystemTrayIcon(self)
+        self.tray_icon.setIcon(QIcon(resource_path("logo.ico")))
+        self.tray_icon.setToolTip("GoodByeDPI GUI - Stopped")
+
+        # ایجاد منو و ذخیره به‌عنوان attribute برای جلوگیری از garbage collection
+        self.tray_menu = QMenu()
+
+        self.tray_start_action = QAction("▶ Start")
+        self.tray_start_action.triggered.connect(self.start_goodbyedpi)
+        self.tray_menu.addAction(self.tray_start_action)
+
+        self.tray_stop_action = QAction("⏹ Stop")
+        self.tray_stop_action.triggered.connect(self.stop_goodbyedpi)
+        self.tray_stop_action.setEnabled(False)
+        self.tray_menu.addAction(self.tray_stop_action)
+
+        self.tray_status_action = QAction("Status: ● Stopped")
+        self.tray_status_action.setEnabled(False)
+        self.tray_menu.addAction(self.tray_status_action)
+
+        # گزینه Exit مستقیماً زیر Status (بدون جداکننده)
+        self.tray_exit_action = QAction("Exit")
+        self.tray_exit_action.triggered.connect(self.full_exit)
+        self.tray_menu.addAction(self.tray_exit_action)
+
+        self.tray_icon.setContextMenu(self.tray_menu)
+        self.tray_icon.activated.connect(self.on_tray_activated)
 
         # Central widget
         central_widget = QWidget()
@@ -125,6 +154,7 @@ class GoodbyeDPIManager(QMainWindow):
         # Initial UI state
         self.update_autostart_check()
         self.on_mode_changed()
+        self.update_tray_status()
 
         # --- Check for updates in background ---
         threading.Thread(target=self.check_for_updates, daemon=True).start()
@@ -219,6 +249,7 @@ class GoodbyeDPIManager(QMainWindow):
             self.status_label.setText("Status: ● Running")
             self.status_label.setStyleSheet("color: green; font-weight: bold;")
             self.log_signal.emit("--- GoodbyeDPI started ---")
+            self.update_tray_status()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error:\n{e}")
 
@@ -228,6 +259,7 @@ class GoodbyeDPIManager(QMainWindow):
             self.process.waitForFinished(2000)
             self.is_running = False
             self.on_process_finished()
+            self.update_tray_status()
 
     def handle_output(self):
         data = self.process.readAllStandardOutput()
@@ -242,6 +274,34 @@ class GoodbyeDPIManager(QMainWindow):
         self.status_label.setText("Status: ● Stopped")
         self.status_label.setStyleSheet("color: red; font-weight: bold;")
         self.log_signal.emit("--- GoodbyeDPI stopped ---")
+        self.update_tray_status()
+
+    def update_tray_status(self):
+        """هم‌راستا کردن منوی آیکون سینی با وضعیت فعلی"""
+        if self.is_running:
+            self.tray_start_action.setEnabled(False)
+            self.tray_stop_action.setEnabled(True)
+            self.tray_status_action.setText("Status: ● Running")
+            self.tray_icon.setToolTip("GoodByeDPI GUI - Running")
+        else:
+            self.tray_start_action.setEnabled(True)
+            self.tray_stop_action.setEnabled(False)
+            self.tray_status_action.setText("Status: ● Stopped")
+            self.tray_icon.setToolTip("GoodByeDPI GUI - Stopped")
+
+    def on_tray_activated(self, reason):
+        """بازگرداندن پنجره با دوبار کلیک روی آیکون سینی"""
+        if reason == QSystemTrayIcon.DoubleClick:
+            self.show()
+            self.raise_()
+            self.activateWindow()
+
+    def full_exit(self):
+        """خروج کامل: توقف GoodbyeDPI و بستن برنامه"""
+        if self.is_running:
+            self.stop_goodbyedpi()
+        self.tray_icon.hide()
+        QApplication.quit()
 
     @Slot(str)
     def append_log(self, text):
@@ -292,19 +352,27 @@ class GoodbyeDPIManager(QMainWindow):
         if msg_box.clickedButton() == update_btn:
             QDesktopServices.openUrl(QUrl(RELEASES_URL))
 
-    # ---- Window close ----
+    # ---- Window close (X button) ----
     def closeEvent(self, event):
-        if self.is_running:
-            reply = QMessageBox.question(self, "Confirm Exit",
-                                         "GoodbyeDPI is running. Stop it and exit?",
-                                         QMessageBox.Yes | QMessageBox.No)
-            if reply == QMessageBox.Yes:
-                self.stop_goodbyedpi()
-                event.accept()
-            else:
-                event.ignore()
-        else:
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle("Exit Options")
+        msg_box.setIcon(QMessageBox.Question)
+        msg_box.setText("What would you like to do?")
+        exit_btn = msg_box.addButton("Exit", QMessageBox.DestructiveRole)
+        tray_btn = msg_box.addButton("Minimize to Tray", QMessageBox.AcceptRole)
+        cancel_btn = msg_box.addButton("Cancel", QMessageBox.RejectRole)
+        msg_box.setDefaultButton(cancel_btn)
+        msg_box.exec()
+
+        if msg_box.clickedButton() == exit_btn:
+            self.full_exit()
             event.accept()
+        elif msg_box.clickedButton() == tray_btn:
+            self.hide()
+            self.tray_icon.show()
+            event.ignore()
+        else:
+            event.ignore()
 
 
 if __name__ == "__main__":
