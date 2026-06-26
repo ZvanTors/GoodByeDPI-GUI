@@ -30,7 +30,7 @@ No command lines, no manual configuration. Just click and browse.
 
 ## 🔽 How to use (EXE version)
 
-1. **Download the latest `GoodByeDPI GUI.exe`** from the [Releases page](https://github.com/YOUR_USERNAME/GoodbyeDPI-GUI/releases).
+1. **Download the latest `GoodByeDPI GUI.exe`** from the [Releases page](https://github.com/ZvanTors/GoodbyeDPI-GUI/releases).
 2. **Run the EXE** – Windows will ask for administrator permission (required to modify network packets). Accept it.
 3. **Choose a mode:**
    - `-6 (Recommended)` – works for most ISPs. Uses reverse fragmentation and fake sequence numbers.
