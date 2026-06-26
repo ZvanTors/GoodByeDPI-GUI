@@ -28,7 +28,8 @@ DPI_EXE = resource_path("goodbyedpi.exe")
 
 # 🔹 Current version of the GUI
 CURRENT_VERSION = "1.0.2"
-GITHUB_API_URL = "https://api.github.com/repos/ZvanTors/GoodByeDPI-GUI/releases/latest"
+# آدرس صفحه‌ی عمومی (نه API) که به آخرین ریلیز ریدایرکت می‌شود
+RELEASES_LATEST_URL = "https://github.com/ZvanTors/GoodByeDPI-GUI/releases/latest"
 RELEASES_URL = "https://github.com/ZvanTors/GoodByeDPI-GUI/releases"
 
 
@@ -55,7 +56,6 @@ class GoodbyeDPIManager(QMainWindow):
         self.tray_icon.setIcon(QIcon(resource_path("logo.ico")))
         self.tray_icon.setToolTip("GoodByeDPI GUI - Stopped")
 
-        # ایجاد منو و ذخیره به‌عنوان attribute برای جلوگیری از garbage collection
         self.tray_menu = QMenu()
 
         self.tray_start_action = QAction("▶ Start")
@@ -71,7 +71,6 @@ class GoodbyeDPIManager(QMainWindow):
         self.tray_status_action.setEnabled(False)
         self.tray_menu.addAction(self.tray_status_action)
 
-        # گزینه Exit مستقیماً زیر Status (بدون جداکننده)
         self.tray_exit_action = QAction("Exit")
         self.tray_exit_action.triggered.connect(self.full_exit)
         self.tray_menu.addAction(self.tray_exit_action)
@@ -307,21 +306,23 @@ class GoodbyeDPIManager(QMainWindow):
     def append_log(self, text):
         self.log_view.append(text)
 
-    # ---- Update checking ----
+    # ---- Update checking (new method using redirect) ----
     def check_for_updates(self):
-        """Run in a background thread: fetch the latest release tag from GitHub."""
+        """Check for updates by following the /releases/latest redirect on GitHub."""
         try:
-            req = urllib.request.Request(GITHUB_API_URL, headers={
-                "Accept": "application/vnd.github.v3+json"
+            req = urllib.request.Request(RELEASES_LATEST_URL, headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
             })
-            with urllib.request.urlopen(req, timeout=5) as response:
-                data = json.loads(response.read().decode())
-            latest_tag = data.get("tag_name", "")
-            if latest_tag:
-                latest_version = latest_tag.lstrip("v")
-                if self.is_newer_version(latest_version):
-                    self.update_found_signal.emit(latest_version)
+            # با urlopen ریدایرکت‌ها دنبال می‌شود و response.url آدرس نهایی را می‌دهد
+            with urllib.request.urlopen(req, timeout=10) as response:
+                final_url = response.url  # e.g. https://github.com/.../releases/tag/V1.0.2
+            # استخراج تگ از انتهای آدرس
+            tag = final_url.rstrip("/").split("/")[-1]   # V1.0.2 یا v1.0.2
+            latest_version = tag.lstrip("v").lstrip("V") # 1.0.2
+            if latest_version and self.is_newer_version(latest_version):
+                self.update_found_signal.emit(latest_version)
         except Exception:
+            # در صورت خطا (مثل اینترنت قطع) بی‌صدا رد شو
             pass
 
     def is_newer_version(self, remote_version):
