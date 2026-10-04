@@ -93,18 +93,6 @@ If your ISP blocks websites using <strong>Deep Packet Inspection (DPI)</strong>,
 
 ---
 
-<h2 id="-screenshots">📸 Screenshots</h2>
-
-<div align="center">
-
-<h3>Main Window</h3>
-
-<img src="Screenshot.png" alt="Main Window" width="700">
-
-</div>
-
----
-
 <h2 id="-how-to-use">🔽 How to Use</h2>
 
 <h3>1️⃣ Download</h3>
