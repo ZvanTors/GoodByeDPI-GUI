@@ -37,7 +37,6 @@
 <ul>
   <li><a href="#-about">🌟 About</a></li>
   <li><a href="#-features">✨ Features</a></li>
-  <li><a href="#-screenshots">📸 Screenshots</a></li>
   <li><a href="#-how-to-use">🔽 How to Use</a></li>
   <li><a href="#-building-from-source">🛠 Building from Source</a></li>
   <li><a href="#-project-structure">🏗 Project Structure</a></li>
