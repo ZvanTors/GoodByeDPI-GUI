@@ -44,6 +44,7 @@
   <li><a href="#-faq">❓ FAQ</a></li>
   <li><a href="#-contributing">🤝 Contributing</a></li>
   <li><a href="#-license">📄 License</a></li>
+  <li><a href="#-support">💝 Support the Project</a></li>
   <li><a href="#-credits">💖 Credits</a></li>
 </ul>
 
@@ -289,6 +290,66 @@ cd GoodByeDPI-GUI</code></pre>
 <p>
 This project is licensed under the <strong>MIT License</strong> — see the <a href="LICENSE">LICENSE</a> file for details.
 </p>
+
+---
+
+<h2 id="-support">💝 Support the Project</h2>
+
+<p>
+<strong>GoodByeDPI GUI</strong> is free, open source, and built with ❤️ in my spare time.<br>
+If it helped you bypass censorship and browse freely, consider supporting its development.<br>
+Every contribution — no matter how small — keeps the project alive and improving. 🙏
+</p>
+
+<br>
+
+<table align="center">
+  <thead>
+    <tr>
+      <th align="center">Network</th>
+      <th align="center">Asset</th>
+      <th align="left">Wallet Address</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center"><img src="https://img.shields.io/badge/TRON-TRX-E50915?style=for-the-badge&logo=tron&logoColor=white" alt="TRON"></td>
+      <td align="center"><strong>TRX</strong></td>
+      <td><code>TWukNBmxLUbPVgayRsZ72u84K8yW7K9cQw</code></td>
+    </tr>
+    <tr>
+      <td align="center"><img src="https://img.shields.io/badge/USDT-TRC20-26A17B?style=for-the-badge&logo=tether&logoColor=white" alt="USDT TRC20"></td>
+      <td align="center"><strong>USDT</strong></td>
+      <td><code>TWukNBmxLUbPVgayRsZ72u84K8yW7K9cQw</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<br>
+
+<blockquote>
+<p align="center">
+⚠️ <strong>Important:</strong> Only send <strong>TRX</strong> or <strong>USDT (TRC20)</strong> to this address.<br>
+Sending any other asset or using a different network (ERC20, BEP20, etc.) will result in <strong>permanent loss of funds</strong>.
+</p>
+</blockquote>
+
+<div align="center">
+
+<p>
+<a href="https://tronscan.org/#/address/TWukNBmxLUbPVgayRsZ72u84K8yW7K9cQw">
+<img src="https://img.shields.io/badge/View%20on-Tronscan-1F2937?style=for-the-badge&logo=blockchaindotcom&logoColor=white" alt="View on Tronscan">
+</a>
+</p>
+
+<br>
+
+<p>
+<strong>Thank you for your support!</strong> 🌟<br>
+<em>Every donation fuels late-night coding sessions and new features.</em>
+</p>
+
+</div>
 
 ---
 
