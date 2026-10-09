@@ -18,6 +18,7 @@ from tray import TrayManager
 from ui import MainWindow
 from updater import UpdateChecker
 from utils import executable_path, resource_path
+from validator import validate_args
 
 
 DPI_EXE = resource_path("goodbyedpi.exe")
@@ -78,6 +79,7 @@ class AppController(QObject):
         self.window.set_autostart(self._is_autostart_enabled())
 
         self._apply_custom_args_state(idx)
+        self._validate_custom_args()
 
     def _ensure_on_screen(self) -> None:
         screen = QApplication.primaryScreen()
@@ -112,6 +114,23 @@ class AppController(QObject):
         idx = self.window.mode_combo.currentIndex()
         if idx == CUSTOM_MODE_INDEX:
             custom = self.window.custom_args_edit.text().strip()
+
+            # --- Pre-start validation ---
+            result = validate_args(custom)
+            if result.has_errors:
+                lines = "\n".join(f"   •  {e}" for e in result.errors)
+                reply = QMessageBox.warning(
+                    self.window,
+                    "Invalid Arguments",
+                    "The custom arguments contain errors:\n\n"
+                    f"{lines}\n\n"
+                    "Do you want to start anyway?",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No,
+                )
+                if reply != QMessageBox.Yes:
+                    return
+
             args = custom.split() if custom else []
         else:
             args = list(MODE_PRESETS[idx][1])
@@ -196,10 +215,16 @@ class AppController(QObject):
             self._saved_custom_args = self.window.custom_args_edit.text()
 
         self._apply_custom_args_state(idx)
+        self._validate_custom_args()
 
     @Slot(str)
     def on_custom_args_changed(self, text: str) -> None:
         self._saved_custom_args = text
+        self._validate_custom_args()
+
+    def _validate_custom_args(self) -> None:
+        result = validate_args(self.window.custom_args_edit.text())
+        self.window.set_args_validation(result.errors, result.warnings)
 
     # ------------------------------------------------------------------
     # Custom arguments help
@@ -214,6 +239,7 @@ class AppController(QObject):
             new_args = dlg.result_args()
             self.window.custom_args_edit.setText(new_args)
             self._saved_custom_args = new_args
+            self._validate_custom_args()
 
     # ------------------------------------------------------------------
     # Autostart

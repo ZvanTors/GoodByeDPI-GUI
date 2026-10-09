@@ -344,9 +344,14 @@ class MainWindow(QMainWindow):
         self._custom_args_container.setObjectName("customArgsContainer")
         self._custom_args_container.setAttribute(Qt.WA_StyledBackground, True)
 
-        custom_row = QHBoxLayout(self._custom_args_container)
-        custom_row.setContentsMargins(0, 0, 0, 0)
-        custom_row.setSpacing(14)
+        container_layout = QVBoxLayout(self._custom_args_container)
+        container_layout.setContentsMargins(0, 0, 0, 0)
+        container_layout.setSpacing(6)
+
+        # --- Top row: label + edit + help button ---
+        top_row = QHBoxLayout()
+        top_row.setContentsMargins(0, 0, 0, 0)
+        top_row.setSpacing(14)
 
         custom_label = QLabel("Custom arguments")
         custom_label.setObjectName("fieldLabel")
@@ -363,9 +368,25 @@ class MainWindow(QMainWindow):
         self.custom_args_help_btn.setFixedSize(40, 36)
         self.custom_args_help_btn.setToolTip("Show available arguments")
 
-        custom_row.addWidget(custom_label)
-        custom_row.addWidget(self.custom_args_edit, 1)
-        custom_row.addWidget(self.custom_args_help_btn, 0)
+        top_row.addWidget(custom_label)
+        top_row.addWidget(self.custom_args_edit, 1)
+        top_row.addWidget(self.custom_args_help_btn, 0)
+        container_layout.addLayout(top_row)
+
+        # --- Validation status row (indented to match the edit field) ---
+        self._args_validation_label = QLabel("")
+        self._args_validation_label.setObjectName("argsValidation")
+        self._args_validation_label.setMinimumHeight(16)
+        self._args_validation_label.setWordWrap(False)
+        self._args_validation_label.setTextInteractionFlags(
+            Qt.NoTextInteraction
+        )
+
+        status_row = QHBoxLayout()
+        status_row.setContentsMargins(154, 0, 0, 0)   # 140 label + 14 spacing
+        status_row.setSpacing(0)
+        status_row.addWidget(self._args_validation_label, 1)
+        container_layout.addLayout(status_row)
 
         layout.addWidget(self._custom_args_container)
 
@@ -539,6 +560,56 @@ class MainWindow(QMainWindow):
         self._settings_group.updateGeometry()
         self._settings_group.adjustSize()
         self.updateGeometry()
+
+    # ------------------------------------------------------------------
+    def set_args_validation(self, errors: list[str],
+                            warnings: list[str]) -> None:
+        """Update the validation status line under the custom args field.
+
+        - Red   ✕ : errors found
+        - Yellow ⚠ : warnings only
+        - Green  ✓ : all good (only when there is input)
+        - Hidden  : empty input
+        """
+        lbl = self._args_validation_label
+        args_empty = not self.custom_args_edit.text().strip()
+
+        if errors:
+            first = errors[0]
+            extra = len(errors) - 1
+            summary = first + (f"   (+{extra} more)" if extra > 0 else "")
+            lbl.setText(f"✕  {summary}")
+            lbl.setStyleSheet(
+                "color:#f38ba8; font-size:9pt; font-weight:600;"
+                " background:transparent;"
+            )
+            tip_lines = [f"✕  {e}" for e in errors] + \
+                        [f"⚠  {w}" for w in warnings]
+            lbl.setToolTip("\n".join(tip_lines))
+
+        elif warnings:
+            first = warnings[0]
+            extra = len(warnings) - 1
+            summary = first + (f"   (+{extra} more)" if extra > 0 else "")
+            lbl.setText(f"⚠  {summary}")
+            lbl.setStyleSheet(
+                "color:#f9e2af; font-size:9pt; font-weight:600;"
+                " background:transparent;"
+            )
+            lbl.setToolTip("\n".join(f"⚠  {w}" for w in warnings))
+
+        elif not args_empty:
+            lbl.setText("✓  Arguments look valid")
+            lbl.setStyleSheet(
+                "color:#a6e3a1; font-size:9pt; font-weight:600;"
+                " background:transparent;"
+            )
+            lbl.setToolTip("")
+
+        else:
+            lbl.setText("")
+            lbl.setStyleSheet("")
+            lbl.setToolTip("")
 
     # ------------------------------------------------------------------
     # Log with color coding
