@@ -6,7 +6,8 @@ APP_VERSION = "1.2.0"
 # GitHub repository info
 GITHUB_OWNER = "ZvanTors"
 GITHUB_REPO = "GoodByeDPI-GUI"
-RELEASES_PAGE = f"https://github.com/{GITHUB_OWNER}/{GITHUB_REPO}/releases"
+GITHUB_URL = f"https://github.com/{GITHUB_OWNER}/{GITHUB_REPO}"
+RELEASES_PAGE = f"{GITHUB_URL}/releases"
 RELEASES_LATEST = f"{RELEASES_PAGE}/latest"
 
 # Name of the EXE asset attached to each release.
@@ -18,6 +19,15 @@ TASK_NAME = "GoodbyeDPIManager"
 # QSettings identifiers
 ORG_NAME = "GoodbyeDPIManager"
 APP_KEY = "GUI"
+
+# Credits / About dialog
+AUTHOR_NAME = "AmooReza"
+AUTHOR_BRAND = "WhiteDNS"
+
+# External resources (About dialog links)
+GOODBYEDPI_URL = "https://github.com/ValdikSS/GoodbyeDPI"
+PYSIDE_URL = "https://pypi.org/project/PySide6/"
+WINDIVERT_URL = "https://www.reqrypt.org/windivert.html"
 
 # Mode presets: (label, arguments, tooltip)
 MODE_PRESETS = [

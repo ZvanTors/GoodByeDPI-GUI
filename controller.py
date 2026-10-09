@@ -12,7 +12,7 @@ from constants import (
     TASK_NAME,
     download_url,
 )
-from dialogs import UpdateDialog
+from dialogs import UpdateDialog, AboutDialog, CustomArgsHelpDialog
 from settings import AppSettings
 from tray import TrayManager
 from ui import MainWindow
@@ -53,6 +53,8 @@ class AppController(QObject):
         self.window.check_update_clicked.connect(self.check_for_updates_manual)
         self.window.clear_log_clicked.connect(self.window.clear_log)
         self.window.copy_log_clicked.connect(self.copy_log_to_clipboard)
+        self.window.about_clicked.connect(self.show_about)
+        self.window.custom_args_help_clicked.connect(self.show_custom_args_help)
 
         self.tray.start_requested.connect(self.start)
         self.tray.stop_requested.connect(self.stop)
@@ -61,6 +63,7 @@ class AppController(QObject):
 
         self.updater.update_available.connect(self.on_update_available)
         self.updater.up_to_date.connect(self.on_up_to_date)
+        self.updater.error.connect(self.on_update_error)
 
     def _restore_state(self) -> None:
         geo = self.settings.geometry
@@ -74,7 +77,6 @@ class AppController(QObject):
         self.window.set_custom_args(self._saved_custom_args)
         self.window.set_autostart(self._is_autostart_enabled())
 
-        # Apply visibility based on the restored mode
         self._apply_custom_args_state(idx)
 
     def _ensure_on_screen(self) -> None:
@@ -134,6 +136,7 @@ class AppController(QObject):
 
         if not self.process.waitForStarted(3000):
             self.is_running = False
+            self.process.deleteLater()
             self.process = None
             QMessageBox.critical(
                 self.window, "Error",
@@ -169,6 +172,10 @@ class AppController(QObject):
         self.tray.set_running(False)
         self.window.append_log("─── GoodbyeDPI stopped ───")
 
+        if self.process is not None:
+            self.process.deleteLater()
+            self.process = None
+
     def _on_process_error(self, error) -> None:
         if error == QProcess.FailedToStart:
             self.is_running = False
@@ -178,7 +185,6 @@ class AppController(QObject):
     # Mode / custom args
     # ------------------------------------------------------------------
     def _apply_custom_args_state(self, mode_idx: int) -> None:
-        """Show the Custom-arguments row ONLY when Custom mode is selected."""
         is_custom = (mode_idx == CUSTOM_MODE_INDEX)
         self.window.set_custom_args_visible(is_custom)
 
@@ -194,6 +200,20 @@ class AppController(QObject):
     @Slot(str)
     def on_custom_args_changed(self, text: str) -> None:
         self._saved_custom_args = text
+
+    # ------------------------------------------------------------------
+    # Custom arguments help
+    # ------------------------------------------------------------------
+    @Slot()
+    def show_custom_args_help(self) -> None:
+        dlg = CustomArgsHelpDialog(
+            self.window,
+            self.window.custom_args_edit.text(),
+        )
+        if dlg.exec() == QDialog.Accepted:
+            new_args = dlg.result_args()
+            self.window.custom_args_edit.setText(new_args)
+            self._saved_custom_args = new_args
 
     # ------------------------------------------------------------------
     # Autostart
@@ -279,6 +299,16 @@ class AppController(QObject):
         self.window.show_info("Copy Log", "Log copied to clipboard.")
 
     # ------------------------------------------------------------------
+    # About
+    # ------------------------------------------------------------------
+    @Slot()
+    def show_about(self) -> None:
+        dlg = AboutDialog(self.window, APP_VERSION)
+        dlg.exec()
+
+    # ------------------------------------------------------------------
+    # Updates
+    # ------------------------------------------------------------------
     @Slot()
     def check_for_updates_manual(self) -> None:
         self.updater.check_async(manual=True)
@@ -294,6 +324,14 @@ class AppController(QObject):
         self.window.show_info(
             "Check for updates",
             f"You are running the latest version (v{APP_VERSION}).",
+        )
+
+    @Slot()
+    def on_update_error(self) -> None:
+        self.window.show_info(
+            "Check for updates",
+            "Couldn't check for updates.\n"
+            "Please verify your internet connection and try again.",
         )
 
     def _open_download(self, version: str) -> None:

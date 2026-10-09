@@ -4,11 +4,24 @@ DARK_QSS = """
 /* ================================================================
    Base
 ================================================================ */
-QMainWindow, QWidget {
+QMainWindow {
+    background: qlineargradient(
+        x1:0, y1:0, x2:1, y2:1,
+        stop:0 #11111b, stop:1 #181825
+    );
+}
+
+QWidget {
     background-color: #11111b;
     color: #cdd6f4;
     font-family: 'Segoe UI Variable', 'Segoe UI', 'Inter', sans-serif;
     font-size: 10pt;
+}
+
+/* Central widget must be transparent so the window gradient shows
+   through. Without this, the base QWidget rule paints a solid color. */
+QWidget#centralWidget {
+    background: transparent;
 }
 
 /* Transparent container for the custom-arguments row
@@ -69,7 +82,16 @@ QLabel#appSubtitle {
     color: #7f849c;
     font-size: 9pt;
 }
-QLabel#versionBadge {
+QLabel#fieldLabel {
+    color: #a6adc8;
+    font-size: 9.5pt;
+    font-weight: 500;
+}
+
+/* ================================================================
+   Version badge (clickable button in header)
+================================================================ */
+QPushButton#versionBadge {
     background-color: rgba(166, 227, 161, 0.12);
     color: #a6e3a1;
     border: 1px solid rgba(166, 227, 161, 0.35);
@@ -78,11 +100,38 @@ QLabel#versionBadge {
     font-size: 9pt;
     font-weight: 700;
     letter-spacing: 0.3px;
+    min-width: 0;
+    min-height: 0;
 }
-QLabel#fieldLabel {
-    color: #a6adc8;
-    font-size: 9.5pt;
-    font-weight: 500;
+QPushButton#versionBadge:hover {
+    background-color: rgba(166, 227, 161, 0.22);
+    border-color: rgba(166, 227, 161, 0.55);
+}
+QPushButton#versionBadge:pressed {
+    background-color: rgba(166, 227, 161, 0.32);
+}
+
+/* ================================================================
+   Help button (?) next to Custom arguments
+================================================================ */
+QPushButton#helpBtn {
+    background-color: #313244;
+    border: 1px solid #45475a;
+    border-radius: 18px;
+    color: #89b4fa;
+    font-size: 12pt;
+    font-weight: 800;
+    padding: 0;
+    min-width: 0;   max-width: 40px;
+    min-height: 0;  max-height: 36px;
+}
+QPushButton#helpBtn:hover {
+    background-color: #45475a;
+    border-color: #89b4fa;
+    color: #a5c8ff;
+}
+QPushButton#helpBtn:pressed {
+    background-color: #585b70;
 }
 
 /* ================================================================

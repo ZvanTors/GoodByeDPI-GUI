@@ -11,7 +11,8 @@ from utils import is_newer_version
 class _UpdateWorker(QThread):
     """Background worker that scrapes the /releases/latest redirect."""
     found = Signal(str)       # emits new version string, e.g. "1.2.0"
-    not_found = Signal()      # emitted when no newer version or network error
+    not_found = Signal()      # emitted when no newer version was found
+    error = Signal()          # emitted when the check itself failed
 
     def run(self) -> None:
         try:
@@ -25,34 +26,43 @@ class _UpdateWorker(QThread):
             # final_url looks like: .../releases/tag/V1.2.0
             m = re.search(r"/tag/[vV]?([0-9]+(?:\.[0-9]+)*)", final_url)
             if not m:
-                self.not_found.emit()
+                # Redirect succeeded but we couldn't parse a version tag.
+                # Don't claim "up to date" — report it as a failed check.
+                self.error.emit()
                 return
+
             latest = m.group(1)
             if is_newer_version(APP_VERSION, latest):
                 self.found.emit(latest)
             else:
                 self.not_found.emit()
         except Exception:
-            self.not_found.emit()
+            # Network error, timeout, DNS failure, etc.
+            self.error.emit()
 
 
 class UpdateChecker(QObject):
     """High-level API for checking updates."""
 
     update_available = Signal(str)  # new version string
-    up_to_date = Signal()           # emitted only for manual checks
+    up_to_date = Signal()           # emitted only for manual checks when nothing found
+    error = Signal()                # emitted only for manual checks when the check failed
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self._worker: _UpdateWorker | None = None
 
     def check_async(self, manual: bool = False) -> None:
-        """Start a background check. If `manual`, emit `up_to_date` when nothing found."""
+        """Start a background check.
+
+        If `manual`, emit `up_to_date` or `error` depending on the outcome.
+        """
         if self._worker is not None and self._worker.isRunning():
             return
         worker = _UpdateWorker(self)
         worker.found.connect(self.update_available)
         if manual:
             worker.not_found.connect(self.up_to_date)
+            worker.error.connect(self.error)
         self._worker = worker
         worker.start()

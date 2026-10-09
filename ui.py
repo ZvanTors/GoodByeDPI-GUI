@@ -1,10 +1,17 @@
 """Pure UI for GoodByeDPI GUI. Exposes signals for user actions."""
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QIcon
+import time
+
+from PySide6.QtCore import (
+    Qt, Signal, QTimer, QPropertyAnimation, QEasingCurve,
+)
+from PySide6.QtGui import (
+    QIcon, QColor, QPainter, QTextCursor, QTextCharFormat,
+)
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QTextEdit, QComboBox, QLineEdit, QCheckBox,
     QGroupBox, QFrame, QSizePolicy, QApplication, QLayout,
+    QGraphicsOpacityEffect,
 )
 
 from constants import APP_VERSION, MODE_PRESETS
@@ -12,19 +19,191 @@ from theme import DARK_QSS
 from utils import resource_path
 
 
+# ------------------------------------------------------------------
+# Animated status dot
+# ------------------------------------------------------------------
+class _StatusDot(QWidget):
+    """A small colored dot that can pulse when active."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFixedSize(10, 10)
+        self._color = QColor("#f38ba8")
+
+        self._effect = QGraphicsOpacityEffect(self)
+        self._effect.setOpacity(1.0)
+        self.setGraphicsEffect(self._effect)
+
+        self._anim = QPropertyAnimation(self._effect, b"opacity", self)
+        self._anim.setDuration(1400)
+        self._anim.setStartValue(1.0)
+        self._anim.setKeyValueAt(0.5, 0.30)
+        self._anim.setEndValue(1.0)
+        self._anim.setLoopCount(-1)
+        self._anim.setEasingCurve(QEasingCurve.InOutSine)
+
+    def set_color(self, color_hex: str) -> None:
+        self._color = QColor(color_hex)
+        self.update()
+
+    def start_pulse(self) -> None:
+        if self._anim.state() != QPropertyAnimation.Running:
+            self._anim.start()
+
+    def stop_pulse(self) -> None:
+        self._anim.stop()
+        self._effect.setOpacity(1.0)
+
+    def paintEvent(self, event):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setBrush(self._color)
+        p.setPen(Qt.NoPen)
+        p.drawEllipse(self.rect())
+
+
+# ------------------------------------------------------------------
+# Status pill (dot + text)
+# ------------------------------------------------------------------
+class _StatusPill(QFrame):
+    """Rounded pill combining the animated dot with a status label."""
+
+    _STATE = {
+        "stopped": ("#f38ba8", "rgba(243, 139, 168, 0.12)",
+                    "rgba(243, 139, 168, 0.35)", "Stopped"),
+        "running": ("#a6e3a1", "rgba(166, 227, 161, 0.12)",
+                    "rgba(166, 227, 161, 0.35)", "Running"),
+    }
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setObjectName("statusPill")
+        self.setAttribute(Qt.WA_StyledBackground, True)
+        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(14, 6, 16, 6)
+        layout.setSpacing(8)
+
+        self._dot = _StatusDot()
+        self._label = QLabel("Stopped")
+        self._label.setObjectName("statusText")
+
+        layout.addWidget(self._dot)
+        layout.addWidget(self._label)
+
+        self.set_state("stopped")
+
+    def set_state(self, state: str) -> None:
+        color, bg, border, text = self._STATE.get(state, self._STATE["stopped"])
+        self._dot.set_color(color)
+        self._label.setText(text)
+
+        if state == "running":
+            self._dot.start_pulse()
+        else:
+            self._dot.stop_pulse()
+
+        self.setStyleSheet(f"""
+            QFrame#statusPill {{
+                background-color: {bg};
+                border: 1px solid {border};
+                border-radius: 12px;
+            }}
+            QFrame#statusPill QLabel {{
+                color: {color};
+                background: transparent;
+                font-weight: 700;
+                font-size: 9.5pt;
+            }}
+        """)
+
+
+# ------------------------------------------------------------------
+# Uptime chip (⏱ 00:00:00)
+# ------------------------------------------------------------------
+class _UptimeChip(QFrame):
+    """A small chip showing how long GoodbyeDPI has been running."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setObjectName("uptimeChip")
+        self.setAttribute(Qt.WA_StyledBackground, True)
+        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.setVisible(False)
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(14, 6, 16, 6)
+        layout.setSpacing(8)
+
+        icon = QLabel("⏱")
+        icon.setObjectName("uptimeIcon")
+
+        self._label = QLabel("00:00:00")
+        self._label.setObjectName("uptimeText")
+
+        layout.addWidget(icon)
+        layout.addWidget(self._label)
+
+        self._start_time: float = 0.0
+        self._timer = QTimer(self)
+        self._timer.setInterval(1000)
+        self._timer.timeout.connect(self._tick)
+
+        self.setStyleSheet("""
+            QFrame#uptimeChip {
+                background-color: rgba(137, 180, 250, 0.10);
+                border: 1px solid rgba(137, 180, 250, 0.30);
+                border-radius: 12px;
+            }
+            QFrame#uptimeChip QLabel { background: transparent; }
+            QLabel#uptimeIcon { color: #89b4fa; font-size: 10pt; }
+            QLabel#uptimeText {
+                color: #a6adc8;
+                font-family: 'Cascadia Code', 'JetBrains Mono', 'Consolas', monospace;
+                font-size: 9.5pt;
+                font-weight: 700;
+                letter-spacing: 0.5px;
+            }
+        """)
+
+    def start(self) -> None:
+        self._start_time = time.monotonic()
+        self._label.setText("00:00:00")
+        self.setVisible(True)
+        self._timer.start()
+
+    def stop_and_hide(self) -> None:
+        self._timer.stop()
+        self.setVisible(False)
+
+    def _tick(self) -> None:
+        elapsed = int(time.monotonic() - self._start_time)
+        if elapsed < 0:
+            elapsed = 0
+        hours, rem = divmod(elapsed, 3600)
+        minutes, seconds = divmod(rem, 60)
+        self._label.setText(f"{hours:02d}:{minutes:02d}:{seconds:02d}")
+
+
+# ------------------------------------------------------------------
+# Main window
+# ------------------------------------------------------------------
 class MainWindow(QMainWindow):
     """The main application window (UI only, no business logic)."""
 
     # User-action signals
-    start_clicked        = Signal()
-    stop_clicked         = Signal()
-    mode_changed         = Signal(int)
-    custom_args_changed  = Signal(str)
-    autostart_toggled    = Signal(bool)
-    close_choice         = Signal(str)
-    check_update_clicked = Signal()
-    clear_log_clicked    = Signal()
-    copy_log_clicked     = Signal()
+    start_clicked            = Signal()
+    stop_clicked             = Signal()
+    mode_changed             = Signal(int)
+    custom_args_changed      = Signal(str)
+    autostart_toggled        = Signal(bool)
+    close_choice             = Signal(str)
+    check_update_clicked     = Signal()
+    clear_log_clicked        = Signal()
+    copy_log_clicked         = Signal()
+    about_clicked            = Signal()
+    custom_args_help_clicked = Signal()
 
     def __init__(self) -> None:
         super().__init__()
@@ -46,8 +225,6 @@ class MainWindow(QMainWindow):
         self._build_ui()
         self._wire_internal_signals()
 
-    # ------------------------------------------------------------------
-    # Windows integration
     # ------------------------------------------------------------------
     def showEvent(self, event):
         super().showEvent(event)
@@ -73,6 +250,7 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
     def _build_ui(self) -> None:
         central = QWidget()
+        central.setObjectName("centralWidget")
         self.setCentralWidget(central)
         root = QVBoxLayout(central)
         root.setContentsMargins(22, 22, 22, 18)
@@ -122,8 +300,11 @@ class MainWindow(QMainWindow):
 
         layout.addLayout(text_col, 1)
 
-        badge = QLabel(f"v{APP_VERSION}")
+        badge = QPushButton(f"v{APP_VERSION}")
         badge.setObjectName("versionBadge")
+        badge.setCursor(Qt.PointingHandCursor)
+        badge.setToolTip("About GoodByeDPI GUI")
+        badge.clicked.connect(self.about_clicked.emit)
         layout.addWidget(badge, 0, Qt.AlignVCenter)
 
         return header
@@ -132,8 +313,6 @@ class MainWindow(QMainWindow):
     def _build_settings_group(self) -> QGroupBox:
         group = QGroupBox("DPI Circumvention Settings")
 
-        # Main layout for the group. The size-constraint below makes the
-        # group resize automatically whenever a child is shown or hidden.
         layout = QVBoxLayout(group)
         layout.setContentsMargins(18, 14, 18, 18)
         layout.setSpacing(14)
@@ -163,7 +342,6 @@ class MainWindow(QMainWindow):
         # ---- Custom args row (in a transparent container) ----
         self._custom_args_container = QWidget()
         self._custom_args_container.setObjectName("customArgsContainer")
-        # Explicitly remove any background from the container
         self._custom_args_container.setAttribute(Qt.WA_StyledBackground, True)
 
         custom_row = QHBoxLayout(self._custom_args_container)
@@ -179,8 +357,15 @@ class MainWindow(QMainWindow):
             "e.g.  -f 2 -e 40 --native-frag --reverse-frag"
         )
 
+        self.custom_args_help_btn = QPushButton("?")
+        self.custom_args_help_btn.setObjectName("helpBtn")
+        self.custom_args_help_btn.setCursor(Qt.PointingHandCursor)
+        self.custom_args_help_btn.setFixedSize(40, 36)
+        self.custom_args_help_btn.setToolTip("Show available arguments")
+
         custom_row.addWidget(custom_label)
         custom_row.addWidget(self.custom_args_edit, 1)
+        custom_row.addWidget(self.custom_args_help_btn, 0)
 
         layout.addWidget(self._custom_args_container)
 
@@ -216,12 +401,14 @@ class MainWindow(QMainWindow):
         self.stop_btn.setMinimumWidth(130)
         self.stop_btn.setEnabled(False)
 
-        self.status_label = QLabel()
+        self._status = _StatusPill()
+        self._uptime = _UptimeChip()
 
         row.addWidget(self.start_btn)
         row.addWidget(self.stop_btn)
         row.addSpacing(10)
-        row.addWidget(self.status_label)
+        row.addWidget(self._status)
+        row.addWidget(self._uptime)
         row.addStretch()
         return row
 
@@ -313,31 +500,20 @@ class MainWindow(QMainWindow):
         self.check_update_btn.clicked.connect(self.check_update_clicked.emit)
         self.clear_log_btn.clicked.connect(self.clear_log_clicked.emit)
         self.copy_log_btn.clicked.connect(self.copy_log_clicked.emit)
+        self.custom_args_help_btn.clicked.connect(
+            self.custom_args_help_clicked.emit
+        )
 
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
     def set_running_state(self, running: bool) -> None:
         if running:
-            self.status_label.setText("● Running")
-            self.status_label.setStyleSheet(
-                "color: #a6e3a1;"
-                " background-color: rgba(166, 227, 161, 0.12);"
-                " border: 1px solid rgba(166, 227, 161, 0.35);"
-                " font-weight: 700;"
-                " padding: 6px 16px;"
-                " border-radius: 12px;"
-            )
+            self._status.set_state("running")
+            self._uptime.start()
         else:
-            self.status_label.setText("● Stopped")
-            self.status_label.setStyleSheet(
-                "color: #f38ba8;"
-                " background-color: rgba(243, 139, 168, 0.12);"
-                " border: 1px solid rgba(243, 139, 168, 0.35);"
-                " font-weight: 700;"
-                " padding: 6px 16px;"
-                " border-radius: 12px;"
-            )
+            self._status.set_state("stopped")
+            self._uptime.stop_and_hide()
         self.start_btn.setEnabled(not running)
         self.stop_btn.setEnabled(running)
 
@@ -359,14 +535,32 @@ class MainWindow(QMainWindow):
     def set_custom_args_visible(self, visible: bool) -> None:
         """Show or hide the Custom-arguments row and force a relayout."""
         self._custom_args_container.setVisible(visible)
-        # Force geometry recalculation up the widget tree
         self._custom_args_container.updateGeometry()
         self._settings_group.updateGeometry()
         self._settings_group.adjustSize()
         self.updateGeometry()
 
+    # ------------------------------------------------------------------
+    # Log with color coding
+    # ------------------------------------------------------------------
     def append_log(self, text: str) -> None:
-        self.log_view.append(text)
+        cursor = self.log_view.textCursor()
+        cursor.movePosition(QTextCursor.End)
+
+        fmt = QTextCharFormat()
+        low = text.lower()
+        if "[error]" in low or "error" in low[:10]:
+            fmt.setForeground(QColor("#f38ba8"))
+        elif "[warn" in low or "warn" in low[:10]:
+            fmt.setForeground(QColor("#f9e2af"))
+        elif text.startswith("───"):
+            fmt.setForeground(QColor("#89b4fa"))
+        else:
+            fmt.setForeground(QColor("#a6e3a1"))
+
+        cursor.insertText(text + "\n", fmt)
+        self.log_view.setTextCursor(cursor)
+        self.log_view.ensureCursorVisible()
 
     def clear_log(self) -> None:
         self.log_view.clear()
