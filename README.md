@@ -91,17 +91,18 @@ If your ISP blocks websites using <strong>Deep Packet Inspection (DPI)</strong>,
     <tr><td>🎛 <strong>Mode Cards</strong></td><td>Pick <em>Fast</em> (recommended), <em>Compatible</em>, or <em>Custom</em> from visual cards with badges instead of a dropdown</td></tr>
     <tr><td>🔧 <strong>Custom Arguments</strong></td><td>Advanced users can pass any GoodbyeDPI flags</td></tr>
     <tr><td>📖 <strong>Arguments Guide</strong></td><td>Built-in tabbed reference of every GoodbyeDPI flag with a one-click “add” button</td></tr>
+    <tr><td>ℹ️ <strong>About Dialog</strong></td><td>Click the version badge to see the app version, Powered-by libraries (with links), and credits</td></tr>
     <tr><td>✅ <strong>Live Args Validator</strong></td><td>Real-time feedback on custom arguments — catches typos, missing values, and conflicting flags before you start</td></tr>
     <tr><td>🍞 <strong>In-App Toast Notifications</strong></td><td>Friendly, dismissible notifications for actions like copying logs and toggling auto-start — no more intrusive popups</td></tr>
     <tr><td>🎞 <strong>Smooth Window Resize</strong></td><td>Window height animates gracefully when switching to Custom mode, keeping everything perfectly in place</td></tr>
     <tr><td>🚀 <strong>Auto-Start with Windows</strong></td><td>Optional Task Scheduler integration</td></tr>
-    <tr><td>📋 <strong>Color-Coded Live Log</strong></td><td>Errors, warnings and separators are highlighted in real time</td></tr>
+    <tr><td>📋 <strong>Color-Coded Live Log</strong></td><td>Errors in red, warnings in yellow, and separators in blue — updated in real time</td></tr>
     <tr><td>📦 <strong>Single Portable EXE</strong></td><td>Everything bundled — no installation, no dependencies</td></tr>
     <tr><td>🌐 <strong>Auto Update Checker</strong></td><td>Notifies you when a new version is available with a direct download link</td></tr>
     <tr><td>🛡 <strong>Zero Impact</strong></td><td>Doesn’t affect games, streaming, or general traffic</td></tr>
     <tr><td>🔔 <strong>System Tray Support</strong></td><td>Runs quietly in the background with Start / Stop / Exit controls</td></tr>
     <tr><td>⏱ <strong>Uptime Counter</strong></td><td>Live session timer while GoodbyeDPI is running</td></tr>
-    <tr><td>🎨 <strong>Modern Dark UI</strong></td><td>Catppuccin-inspired theme with rounded cards, animated status dot, and dark title bar</td></tr>
+    <tr><td>🎨 <strong>Modern Dark UI</strong></td><td>Catppuccin-inspired theme with background gradient, rounded cards, floating pill titles, and a native dark title bar</td></tr>
     <tr><td>💾 <strong>Persistent Settings</strong></td><td>Window position, mode, and custom arguments remembered between sessions</td></tr>
   </tbody>
 </table>
@@ -146,7 +147,7 @@ Double-click the EXE. Windows will request <strong>administrator privileges</str
 <p>Click <strong>⏹ Stop</strong> when you no longer need the bypass.</p>
 
 <blockquote>
-<p><strong>Tip — Custom arguments:</strong> Click the <strong>?</strong> button next to the Custom arguments field to open the built-in <em>Arguments Guide</em>. Pick a preset or append individual flags with one click. The field also validates your input live and warns you about typos or conflicting options.</p>
+<p><strong>Tip — Custom arguments:</strong> Click the <strong>?</strong> button next to the Custom arguments field to open the built-in <em>Arguments Guide</em> — 5 tabbed categories, live search, and a one-click <strong>+</strong> to add flags. In the <em>Presets</em> tab, <strong>+</strong> replaces the whole line; in all other tabs it appends. The field also validates your input live (<span style="color:#a6e3a1;">✓</span> / <span style="color:#f9e2af;">⚠</span> / <span style="color:#f38ba8;">✕</span>) and warns you about typos or conflicting options.</p>
 </blockquote>
 
 <blockquote>
