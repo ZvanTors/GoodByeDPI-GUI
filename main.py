@@ -3,9 +3,9 @@ import sys
 
 from PySide6.QtWidgets import QApplication, QMessageBox
 
-from constants import APP_NAME, ORG_NAME
-from controller import AppController
-from utils import is_admin
+from app.constants import APP_NAME, ORG_NAME
+from app.core.controller import AppController
+from app.utils import is_admin
 
 
 def main() -> int:

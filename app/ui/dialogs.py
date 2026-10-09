@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (
     QFrame, QWidget, QTabWidget, QScrollArea, QLineEdit,
 )
 
-from constants import (
+from app.constants import (
     AUTHOR_NAME,
     AUTHOR_BRAND,
     GITHUB_URL,

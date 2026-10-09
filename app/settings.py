@@ -1,7 +1,7 @@
 """Persistent user settings (backed by QSettings)."""
 from PySide6.QtCore import QSettings
 
-from constants import ORG_NAME, APP_KEY
+from app.constants import ORG_NAME, APP_KEY
 
 
 class AppSettings:

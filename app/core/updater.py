@@ -4,8 +4,8 @@ import urllib.request
 
 from PySide6.QtCore import QObject, Signal, QThread
 
-from constants import RELEASES_LATEST, APP_VERSION
-from utils import is_newer_version
+from app.constants import RELEASES_LATEST, APP_VERSION
+from app.utils import is_newer_version
 
 
 class _UpdateWorker(QThread):

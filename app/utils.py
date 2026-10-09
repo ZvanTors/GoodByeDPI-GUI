@@ -8,11 +8,18 @@ def resource_path(relative_path: str) -> str:
     """Return the absolute path to a bundled resource.
 
     Works both when running from source and when frozen by PyInstaller.
+
+    - Frozen:  resources live next to the EXE inside ``sys._MEIPASS``
+               (PyInstaller extracts ``--add-data`` targets there).
+    - Source:  the project root (parent of the ``app/`` package) is used
+               as the base, so ``bin/`` and ``assets/`` are found at the
+               repository root, regardless of the current working dir.
     """
     if getattr(sys, "frozen", False):
         base_path = sys._MEIPASS
     else:
-        base_path = os.path.dirname(os.path.abspath(__file__))
+        # app/utils.py  ->  app/  ->  project root
+        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base_path, relative_path)
 
 
@@ -25,8 +32,15 @@ def is_admin() -> bool:
 
 
 def executable_path() -> str:
-    """Return the path used to relaunch this app (EXE or script)."""
-    return sys.executable if getattr(sys, "frozen", False) else sys.argv[0]
+    """Return the path used to relaunch this app (EXE or script).
+
+    In frozen mode this is the EXE itself; in source mode this is
+    ``main.py`` resolved to an absolute path so that Task Scheduler
+    entries work regardless of the current working directory.
+    """
+    if getattr(sys, "frozen", False):
+        return sys.executable
+    return os.path.abspath(sys.argv[0])
 
 
 def parse_version(v: str):

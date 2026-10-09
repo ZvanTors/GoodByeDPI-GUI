@@ -6,22 +6,27 @@ from PySide6.QtCore import QObject, QProcess, QUrl, Slot
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QApplication, QMessageBox, QDialog
 
-from constants import (
+from app.constants import (
     APP_VERSION,
+    DPI_EXE_REL,
     MODE_PRESETS,
     TASK_NAME,
     download_url,
 )
-from dialogs import UpdateDialog, AboutDialog, CustomArgsHelpDialog
-from settings import AppSettings
-from tray import TrayManager
-from ui import MainWindow
-from updater import UpdateChecker
-from utils import executable_path, resource_path
-from validator import validate_args
+from app.ui.dialogs import (
+    UpdateDialog,
+    AboutDialog,
+    CustomArgsHelpDialog,
+)
+from app.settings import AppSettings
+from app.ui.tray import TrayManager
+from app.ui.main_window import MainWindow
+from app.core.updater import UpdateChecker
+from app.utils import executable_path, resource_path
+from app.validator import validate_args
 
 
-DPI_EXE = resource_path("goodbyedpi.exe")
+DPI_EXE = resource_path(DPI_EXE_REL)
 CUSTOM_MODE_INDEX = 2
 
 

@@ -3,7 +3,8 @@ from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QIcon, QAction
 from PySide6.QtWidgets import QSystemTrayIcon, QMenu
 
-from utils import resource_path
+from app.constants import LOGO_ICO_REL
+from app.utils import resource_path
 
 
 class TrayManager(QObject):
@@ -18,7 +19,7 @@ class TrayManager(QObject):
         super().__init__(parent)
 
         self._icon = QSystemTrayIcon(parent)
-        self._icon.setIcon(QIcon(resource_path("logo.ico")))
+        self._icon.setIcon(QIcon(resource_path(LOGO_ICO_REL)))
         self._icon.setToolTip("GoodByeDPI GUI - Stopped")
 
         self._menu = QMenu()

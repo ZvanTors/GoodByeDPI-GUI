@@ -29,6 +29,12 @@ GOODBYEDPI_URL = "https://github.com/ValdikSS/GoodbyeDPI"
 PYSIDE_URL = "https://pypi.org/project/PySide6/"
 WINDIVERT_URL = "https://www.reqrypt.org/windivert.html"
 
+# ---------------------------------------------------------------------
+# Bundled resource paths (relative — resolved via utils.resource_path)
+# ---------------------------------------------------------------------
+DPI_EXE_REL  = "bin/goodbyedpi.exe"
+LOGO_ICO_REL = "assets/logo.ico"
+
 # Mode presets: (label, arguments, tooltip)
 MODE_PRESETS = [
     ("Fast  —  Recommended",
