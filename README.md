@@ -18,10 +18,16 @@
 </p>
 
 <p>
+<a href="https://ZvanTors.github.io/GoodByeDPI-GUI/"><img src="https://img.shields.io/badge/🌐%20Landing%20Page-Visit%20Site-89B4FA?style=for-the-badge&logo=githubpages&logoColor=white" alt="Landing Page"></a>
 <a href="https://github.com/ZvanTors/GoodByeDPI-GUI/releases/latest"><img src="https://img.shields.io/badge/%E2%AC%87%20Download-Latest%20Release-FF6B00?style=for-the-badge&logo=github&logoColor=white" alt="Download"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="License"></a>
 <a href="https://github.com/ZvanTors/GoodByeDPI-GUI/stargazers"><img src="https://img.shields.io/github/stars/ZvanTors/GoodByeDPI-GUI?style=for-the-badge&logo=github&color=yellow" alt="Stars"></a>
 <a href="https://github.com/ZvanTors/GoodByeDPI-GUI/issues"><img src="https://img.shields.io/github/issues/ZvanTors/GoodByeDPI-GUI?style=for-the-badge&logo=github&color=red" alt="Issues"></a>
+</p>
+
+<p>
+<a href="https://github.com/ZvanTors/GoodByeDPI-GUI/wiki"><img src="https://img.shields.io/badge/📚%20Documentation-Wiki-CBA6F7?style=for-the-badge&logo=gitbook&logoColor=white" alt="Wiki"></a>
+<a href="https://github.com/ZvanTors/GoodByeDPI-GUI/discussions"><img src="https://img.shields.io/badge/💬%20Discussions-Join-F9E2AF?style=for-the-badge&logo=github&logoColor=white" alt="Discussions"></a>
 </p>
 
 <br>
@@ -64,6 +70,10 @@ If your ISP blocks websites using <strong>Deep Packet Inspection (DPI)</strong>,
 <p>💡 <strong>Best part:</strong> it doesn’t slow down your connection, doesn’t affect games, and runs entirely on your machine. No servers, no logs, no subscriptions.</p>
 </blockquote>
 
+<p>
+🌐 <strong>Visit the <a href="https://ZvanTors.github.io/GoodByeDPI-GUI/">Landing Page</a></strong> · 📚 <strong>Read the <a href="https://github.com/ZvanTors/GoodByeDPI-GUI/wiki">Wiki</a></strong>
+</p>
+
 ---
 
 <h2 id="-features">✨ Features</h2>
@@ -95,10 +105,6 @@ If your ISP blocks websites using <strong>Deep Packet Inspection (DPI)</strong>,
     <tr><td>💾 <strong>Persistent Settings</strong></td><td>Window position, mode, and custom arguments remembered between sessions</td></tr>
   </tbody>
 </table>
-
----
-
-🌐 **[Visit the Landing Page →](https://zvanTors.github.io/GoodByeDPI-GUI/)**
 
 ---
 
@@ -225,6 +231,9 @@ cd GoodByeDPI-GUI</code></pre>
 │   ├── WinDivert.dll
 │   └── WinDivert64.sys
 │
+├── docs/                       ← GitHub Pages landing page
+│   └── index.html
+│
 └── app/                        ← application package
     ├── constants.py            ← app constants &amp; mode presets
     ├── settings.py             ← persistent settings (QSettings)
@@ -252,6 +261,7 @@ cd GoodByeDPI-GUI</code></pre>
   <li><strong>Core is testable</strong> — <code>app/core/</code> has no direct dependency on widgets.</li>
   <li><strong>Cross-cutting helpers</strong> (<code>utils</code>, <code>settings</code>, <code>validator</code>) sit at the package root.</li>
   <li><strong>Bundled resources</strong> are resolved via <code>utils.resource_path()</code>, so paths work both from source and inside a PyInstaller build.</li>
+  <li><strong>Landing page</strong> lives in <code>docs/</code> and is served via GitHub Pages.</li>
 </ul>
 
 ---
@@ -300,6 +310,10 @@ cd GoodByeDPI-GUI</code></pre>
 python main.py</code></pre>
 </details>
 
+<p>
+📚 For more, see the <a href="https://github.com/ZvanTors/GoodByeDPI-GUI/wiki/Troubleshooting"><strong>full Troubleshooting Wiki page</strong></a>.
+</p>
+
 ---
 
 <h2 id="-faq">❓ FAQ</h2>
@@ -329,6 +343,10 @@ python main.py</code></pre>
 <p>Only Windows 10 and 11 are officially supported.</p>
 </details>
 
+<p>
+📚 For more, see the <a href="https://github.com/ZvanTors/GoodByeDPI-GUI/wiki/FAQ"><strong>full FAQ Wiki page</strong></a>.
+</p>
+
 ---
 
 <h2 id="-contributing">🤝 Contributing</h2>
@@ -344,6 +362,10 @@ python main.py</code></pre>
 </ol>
 
 <p>Please make sure your code follows the existing style and includes comments where necessary.</p>
+
+<p>
+🏗 Want to understand the codebase first? Read the <a href="https://github.com/ZvanTors/GoodByeDPI-GUI/wiki/Architecture"><strong>Architecture Wiki page</strong></a>.
+</p>
 
 ---
 
@@ -432,6 +454,16 @@ Sending any other asset or using a different network (ERC20, BEP20, etc.) will r
 
 <p>
 <a href="https://star-history.com/#ZvanTors/GoodByeDPI-GUI&Date"><img src="https://api.star-history.com/svg?repos=ZvanTors/GoodByeDPI-GUI&type=Date" alt="Star History"></a>
+</p>
+
+<br>
+
+<p>
+🌐 <strong><a href="https://ZvanTors.github.io/GoodByeDPI-GUI/">Landing Page</a></strong>
+&nbsp;·&nbsp;
+📚 <strong><a href="https://github.com/ZvanTors/GoodByeDPI-GUI/wiki">Wiki</a></strong>
+&nbsp;·&nbsp;
+💬 <strong><a href="https://github.com/ZvanTors/GoodByeDPI-GUI/discussions">Discussions</a></strong>
 </p>
 
 <br>
