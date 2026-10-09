@@ -78,10 +78,12 @@ If your ISP blocks websites using <strong>Deep Packet Inspection (DPI)</strong>,
   <tbody>
     <tr><td>🖥 <strong>Fully Graphical</strong></td><td>No terminal, no scripts — a clean PySide6 GUI</td></tr>
     <tr><td>⚡ <strong>One-Click Start / Stop</strong></td><td>Activate or deactivate DPI circumvention instantly</td></tr>
-    <tr><td>🎛 <strong>Preset Modes</strong></td><td>Choose between <em>Fast</em> (recommended), <em>Compatible</em>, or <em>Custom</em></td></tr>
+    <tr><td>🎛 <strong>Mode Cards</strong></td><td>Pick <em>Fast</em> (recommended), <em>Compatible</em>, or <em>Custom</em> from visual cards with badges instead of a dropdown</td></tr>
     <tr><td>🔧 <strong>Custom Arguments</strong></td><td>Advanced users can pass any GoodbyeDPI flags</td></tr>
     <tr><td>📖 <strong>Arguments Guide</strong></td><td>Built-in tabbed reference of every GoodbyeDPI flag with a one-click “add” button</td></tr>
     <tr><td>✅ <strong>Live Args Validator</strong></td><td>Real-time feedback on custom arguments — catches typos, missing values, and conflicting flags before you start</td></tr>
+    <tr><td>🍞 <strong>In-App Toast Notifications</strong></td><td>Friendly, dismissible notifications for actions like copying logs and toggling auto-start — no more intrusive popups</td></tr>
+    <tr><td>🎞 <strong>Smooth Window Resize</strong></td><td>Window height animates gracefully when switching to Custom mode, keeping everything perfectly in place</td></tr>
     <tr><td>🚀 <strong>Auto-Start with Windows</strong></td><td>Optional Task Scheduler integration</td></tr>
     <tr><td>📋 <strong>Color-Coded Live Log</strong></td><td>Errors, warnings and separators are highlighted in real time</td></tr>
     <tr><td>📦 <strong>Single Portable EXE</strong></td><td>Everything bundled — no installation, no dependencies</td></tr>
@@ -108,19 +110,19 @@ Grab the latest <strong><code>GoodByeDPI.GUI.exe</code></strong> from the <a hre
 Double-click the EXE. Windows will request <strong>administrator privileges</strong> — accept it (required to modify network packets).
 </p>
 
-<h3>3️⃣ Choose a Mode</h3>
+<h3>3️⃣ Pick a Mode Card</h3>
 
 <table>
   <thead>
     <tr>
-      <th>Mode</th>
+      <th>Card</th>
       <th>Description</th>
     </tr>
   </thead>
   <tbody>
-    <tr><td><code>Fast — Recommended</code></td><td>Best for most ISPs — reverse fragmentation + fake SEQ (<code>-6</code>)</td></tr>
-    <tr><td><code>Compatible — Fallback</code></td><td>Gentler fragmentation preset (<code>-5</code>)</td></tr>
-    <tr><td><code>Custom arguments</code></td><td>Enter your own GoodbyeDPI arguments manually</td></tr>
+    <tr><td><code>⚡ Fast — Recommended</code></td><td>Best for most ISPs — reverse fragmentation + fake SEQ (<code>-6</code>)</td></tr>
+    <tr><td><code>🛡 Compatible — Fallback</code></td><td>Gentler fragmentation preset (<code>-5</code>)</td></tr>
+    <tr><td><code>🔧 Custom</code></td><td>Enter your own GoodbyeDPI arguments manually</td></tr>
   </tbody>
 </table>
 
@@ -232,7 +234,9 @@ cd GoodByeDPI-GUI</code></pre>
     └── ui/                     ← presentation layer
         ├── main_window.py      ← main window (signals only)
         ├── dialogs.py          ← UpdateDialog / AboutDialog / Args Guide
-        ├── widgets.py          ← StatusDot, StatusPill, UptimeChip
+        ├── widgets.py          ← StatusDot, StatusPill, UptimeChip,
+        │                          ModeCard, ModeCardGroup,
+        │                          Toast, ToastManager
         ├── theme.py            ← Catppuccin-inspired QSS
         └── tray.py             ← system tray icon &amp; menu</code></pre>
 
@@ -263,8 +267,8 @@ cd GoodByeDPI-GUI</code></pre>
 <details>
 <summary><strong>❌ Websites still don’t open</strong></summary>
 <ul>
-  <li>Try mode <code>Compatible</code> instead of <code>Fast</code>.</li>
-  <li>Use <strong>Custom arguments</strong> mode with: <code>-f 2 -e 40 --native-frag --reverse-frag --max-payload</code></li>
+  <li>Try the <code>Compatible</code> card instead of <code>Fast</code>.</li>
+  <li>Use <strong>Custom</strong> mode with: <code>-f 2 -e 40 --native-frag --reverse-frag --max-payload</code></li>
   <li>Make sure <strong>no VPN</strong> is currently active.</li>
   <li>Your ISP may use a different filtering method — consider <strong>Cloudflare WARP</strong> as an alternative.</li>
 </ul>
@@ -282,7 +286,7 @@ cd GoodByeDPI-GUI</code></pre>
 
 <details>
 <summary><strong>❌ Update dialog doesn’t appear</strong></summary>
-<p>The update check runs silently in the background. If no popup appears, you’re either up to date or offline. You can trigger a manual check by clicking <strong>🔄 Check for updates</strong> in the bottom-left of the window.</p>
+<p>The update check runs silently in the background. If no popup appears, you’re either up to date or offline. A toast notification will confirm either way when you click <strong>🔄 Check for updates</strong> in the bottom-left of the window.</p>
 </details>
 
 <details>
