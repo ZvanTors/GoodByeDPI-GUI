@@ -98,6 +98,10 @@ If your ISP blocks websites using <strong>Deep Packet Inspection (DPI)</strong>,
 
 ---
 
+🌐 **[Visit the Landing Page →](https://zvanTors.github.io/GoodByeDPI-GUI/)**
+
+---
+
 <h2 id="-how-to-use">🔽 How to Use</h2>
 
 <h3>1️⃣ Download</h3>
