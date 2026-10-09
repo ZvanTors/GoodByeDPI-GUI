@@ -80,13 +80,16 @@ If your ISP blocks websites using <strong>Deep Packet Inspection (DPI)</strong>,
     <tr><td>⚡ <strong>One-Click Start / Stop</strong></td><td>Activate or deactivate DPI circumvention instantly</td></tr>
     <tr><td>🎛 <strong>Preset Modes</strong></td><td>Choose between <em>Fast</em> (recommended), <em>Compatible</em>, or <em>Custom</em></td></tr>
     <tr><td>🔧 <strong>Custom Arguments</strong></td><td>Advanced users can pass any GoodbyeDPI flags</td></tr>
+    <tr><td>📖 <strong>Arguments Guide</strong></td><td>Built-in tabbed reference of every GoodbyeDPI flag with a one-click “add” button</td></tr>
+    <tr><td>✅ <strong>Live Args Validator</strong></td><td>Real-time feedback on custom arguments — catches typos, missing values, and conflicting flags before you start</td></tr>
     <tr><td>🚀 <strong>Auto-Start with Windows</strong></td><td>Optional Task Scheduler integration</td></tr>
-    <tr><td>📋 <strong>Live Output Log</strong></td><td>See exactly what’s happening in real time</td></tr>
+    <tr><td>📋 <strong>Color-Coded Live Log</strong></td><td>Errors, warnings and separators are highlighted in real time</td></tr>
     <tr><td>📦 <strong>Single Portable EXE</strong></td><td>Everything bundled — no installation, no dependencies</td></tr>
     <tr><td>🌐 <strong>Auto Update Checker</strong></td><td>Notifies you when a new version is available with a direct download link</td></tr>
     <tr><td>🛡 <strong>Zero Impact</strong></td><td>Doesn’t affect games, streaming, or general traffic</td></tr>
     <tr><td>🔔 <strong>System Tray Support</strong></td><td>Runs quietly in the background with Start / Stop / Exit controls</td></tr>
-    <tr><td>🎨 <strong>Modern Dark UI</strong></td><td>Catppuccin-inspired theme with rounded cards and dark title bar</td></tr>
+    <tr><td>⏱ <strong>Uptime Counter</strong></td><td>Live session timer while GoodbyeDPI is running</td></tr>
+    <tr><td>🎨 <strong>Modern Dark UI</strong></td><td>Catppuccin-inspired theme with rounded cards, animated status dot, and dark title bar</td></tr>
     <tr><td>💾 <strong>Persistent Settings</strong></td><td>Window position, mode, and custom arguments remembered between sessions</td></tr>
   </tbody>
 </table>
@@ -131,7 +134,11 @@ Double-click the EXE. Windows will request <strong>administrator privileges</str
 <p>Click <strong>⏹ Stop</strong> when you no longer need the bypass.</p>
 
 <blockquote>
-<p><strong>Tip:</strong> Enable <strong>“Run on Windows startup”</strong> to have GoodByeDPI launch automatically when you log in.</p>
+<p><strong>Tip — Custom arguments:</strong> Click the <strong>?</strong> button next to the Custom arguments field to open the built-in <em>Arguments Guide</em>. Pick a preset or append individual flags with one click. The field also validates your input live and warns you about typos or conflicting options.</p>
+</blockquote>
+
+<blockquote>
+<p><strong>Tip — Auto-start:</strong> Enable <strong>“Run on Windows startup”</strong> to have GoodByeDPI launch automatically when you log in.</p>
 </blockquote>
 
 <blockquote>
@@ -160,44 +167,84 @@ cd GoodByeDPI-GUI</code></pre>
 
 <p><strong>2. Install dependencies</strong></p>
 
+<pre><code>pip install -r requirements.txt</code></pre>
+
+<p>Or manually:</p>
+
 <pre><code>pip install pyside6 pyinstaller</code></pre>
 
-<p><strong>3. Download GoodbyeDPI</strong> from the <a href="https://github.com/ValdikSS/GoodbyeDPI/releases">official releases</a> and place these files in the project folder:</p>
+<p><strong>3. Download GoodbyeDPI</strong> from the <a href="https://github.com/ValdikSS/GoodbyeDPI/releases">official releases</a> and place these files inside the <code>bin/</code> folder:</p>
 
 <ul>
-  <li><code>goodbyedpi.exe</code></li>
-  <li><code>WinDivert.dll</code></li>
-  <li><code>WinDivert64.sys</code></li>
+  <li><code>bin/goodbyedpi.exe</code></li>
+  <li><code>bin/WinDivert.dll</code></li>
+  <li><code>bin/WinDivert64.sys</code></li>
 </ul>
 
-<p><strong>4. Add an icon</strong> (optional): place <code>logo.ico</code> in the project folder.</p>
+<p><strong>4. Add an icon</strong> (optional): place <code>logo.ico</code> inside the <code>assets/</code> folder.</p>
 
 <p><strong>5. Build the EXE</strong></p>
 
-<pre><code>pyinstaller --onefile --windowed --uac-admin --name "GoodByeDPI GUI" --add-data "goodbyedpi.exe;." --add-data "WinDivert.dll;." --add-data "WinDivert64.sys;." --add-data "logo.ico;." --icon=logo.ico main.py</code></pre>
+<pre><code>pyinstaller --onefile --windowed --uac-admin --name "GoodByeDPI GUI" ^
+  --add-data "assets;assets" ^
+  --add-data "bin;bin" ^
+  --icon=assets/logo.ico ^
+  main.py</code></pre>
 
-<p><strong>6. Find your EXE</strong> in the <code>dist/</code> folder.</p>
+<blockquote>
+<p>💡 On PowerShell use a backtick <code>`</code> instead of <code>^</code> for line continuation, or put the whole command on a single line.</p>
+</blockquote>
+
+<p><strong>6. Find your EXE</strong> in the <code>dist/</code> folder and rename <code>GoodByeDPI GUI.exe</code> to <code>GoodByeDPI.GUI.exe</code>.</p>
 
 ---
 
 <h2 id="-project-structure">🏗 Project Structure</h2>
 
-<p>The codebase is split into focused modules for maintainability:</p>
+<p>The codebase uses a clean, modular layout — entry point at the root, application code inside the <code>app/</code> package:</p>
 
 <pre><code>GoodByeDPI-GUI/
-├── main.py           ← entry point
-├── constants.py      ← app constants &amp; mode presets
-├── utils.py          ← helpers (paths, admin check, version parse)
-├── theme.py          ← Catppuccin-inspired QSS
-├── settings.py       ← persistent settings (QSettings)
-├── updater.py        ← GitHub release checker (background thread)
-├── tray.py           ← system tray icon &amp; menu
-├── ui.py             ← pure UI (signals only)
-├── controller.py     ← wiring logic between UI and services
-├── goodbyedpi.exe
-├── WinDivert.dll
-├── WinDivert64.sys
-└── logo.ico</code></pre>
+├── main.py                     ← entry point (run this)
+├── requirements.txt
+├── README.md
+├── LICENSE
+├── .gitignore
+│
+├── assets/                     ← visual resources
+│   ├── logo.ico
+│   └── Screenshot.png
+│
+├── bin/                        ← runtime binaries &amp; drivers
+│   ├── goodbyedpi.exe
+│   ├── WinDivert.dll
+│   └── WinDivert64.sys
+│
+└── app/                        ← application package
+    ├── constants.py            ← app constants &amp; mode presets
+    ├── settings.py             ← persistent settings (QSettings)
+    ├── utils.py                ← helpers (paths, admin check, versions)
+    ├── validator.py            ← custom-arguments validator
+    │
+    ├── core/                   ← services &amp; business logic
+    │   ├── controller.py       ← wires UI, tray, settings, updater
+    │   └── updater.py          ← GitHub release checker (QThread)
+    │
+    └── ui/                     ← presentation layer
+        ├── main_window.py      ← main window (signals only)
+        ├── dialogs.py          ← UpdateDialog / AboutDialog / Args Guide
+        ├── widgets.py          ← StatusDot, StatusPill, UptimeChip
+        ├── theme.py            ← Catppuccin-inspired QSS
+        └── tray.py             ← system tray icon &amp; menu</code></pre>
+
+<p>
+<strong>Design notes:</strong>
+</p>
+<ul>
+  <li><strong>UI is pure</strong> — <code>app/ui/</code> only emits Qt signals and never performs business logic.</li>
+  <li><strong>Core is testable</strong> — <code>app/core/</code> has no direct dependency on widgets.</li>
+  <li><strong>Cross-cutting helpers</strong> (<code>utils</code>, <code>settings</code>, <code>validator</code>) sit at the package root.</li>
+  <li><strong>Bundled resources</strong> are resolved via <code>utils.resource_path()</code>, so paths work both from source and inside a PyInstaller build.</li>
+</ul>
 
 ---
 
@@ -236,6 +283,13 @@ cd GoodByeDPI-GUI</code></pre>
 <details>
 <summary><strong>❌ Update dialog doesn’t appear</strong></summary>
 <p>The update check runs silently in the background. If no popup appears, you’re either up to date or offline. You can trigger a manual check by clicking <strong>🔄 Check for updates</strong> in the bottom-left of the window.</p>
+</details>
+
+<details>
+<summary><strong>❌ <code>ModuleNotFoundError: No module named 'app'</code> (when running from source)</strong></summary>
+<p>Run the app <strong>from the project root</strong>, not from inside a subfolder:</p>
+<pre><code>cd GoodByeDPI-GUI
+python main.py</code></pre>
 </details>
 
 ---
