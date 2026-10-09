@@ -2,7 +2,7 @@
 from typing import List, NamedTuple
 
 APP_NAME = "GoodByeDPI GUI"
-APP_VERSION = "1.2.0"
+APP_VERSION = "1.3.0"
 
 # GitHub repository info
 GITHUB_OWNER = "ZvanTors"

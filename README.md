@@ -11,7 +11,7 @@
 <br>
 
 <p>
-<a href="https://github.com/ZvanTors/GoodByeDPI-GUI/releases"><img src="https://img.shields.io/badge/version-1.2.0-2563EB?style=for-the-badge&logo=github&logoColor=white" alt="Version"></a>
+<a href="https://github.com/ZvanTors/GoodByeDPI-GUI/releases"><img src="https://img.shields.io/badge/version-1.3.0-2563EB?style=for-the-badge&logo=github&logoColor=white" alt="Version"></a>
 <a href="https://www.microsoft.com/windows"><img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Platform"></a>
 <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.8%2B-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python"></a>
 <a href="https://pypi.org/project/PySide6/"><img src="https://img.shields.io/badge/PySide6-Qt%20for%20Python-41CD52?style=for-the-badge&logo=qt&logoColor=white" alt="PySide6"></a>
