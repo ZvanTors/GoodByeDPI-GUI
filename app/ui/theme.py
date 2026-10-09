@@ -154,6 +154,61 @@ QLabel#creditBrand   { color: #a6e3a1; font-size: 8.5pt;
                        font-weight: 700; letter-spacing: 0.3px; }
 
 /* ================================================================
+   Mode cards (replace the old mode ComboBox)
+================================================================ */
+QFrame#modeCard {
+    background-color: #1e1e2e;
+    border: 1px solid #313244;
+    border-radius: 12px;
+}
+QFrame#modeCard:hover {
+    background-color: #252537;
+    border: 1px solid #45475a;
+}
+QFrame#modeCard[selected="true"] {
+    background-color: rgba(137, 180, 250, 0.10);
+    border: 1px solid #89b4fa;
+}
+QFrame#modeCard[selected="true"]:hover {
+    background-color: rgba(137, 180, 250, 0.15);
+    border: 1px solid #a5c8ff;
+}
+
+QFrame#modeCard QLabel#modeCardIcon {
+    background: transparent;
+    font-size: 20pt;
+}
+QFrame#modeCard QLabel#modeCardTitle {
+    background: transparent;
+    color: #f5f5f5;
+    font-size: 11pt;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+}
+QFrame#modeCard[selected="true"] QLabel#modeCardTitle {
+    color: #89b4fa;
+}
+
+QFrame#modeCard QLabel#modeCardBadge {
+    background-color: rgba(166, 227, 161, 0.12);
+    color: #a6e3a1;
+    border: 1px solid rgba(166, 227, 161, 0.35);
+    border-radius: 8px;
+    padding: 1px 8px;
+    font-size: 7.5pt;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+}
+QFrame#modeCard QLabel#modeCardDesc {
+    background: transparent;
+    color: #7f849c;
+    font-size: 8.5pt;
+}
+QFrame#modeCard[selected="true"] QLabel#modeCardDesc {
+    color: #a6adc8;
+}
+
+/* ================================================================
    Inputs
 ================================================================ */
 QComboBox, QLineEdit {

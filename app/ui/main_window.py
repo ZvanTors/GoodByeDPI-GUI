@@ -1,17 +1,21 @@
 """Pure UI for GoodByeDPI GUI. Exposes signals for user actions."""
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import (
+    Qt, Signal, QRect, QPropertyAnimation, QEasingCurve,
+)
 from PySide6.QtGui import (
     QIcon, QColor, QTextCursor, QTextCharFormat,
 )
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QPushButton, QTextEdit, QComboBox, QLineEdit, QCheckBox,
-    QGroupBox, QFrame, QSizePolicy, QApplication, QLayout,
+    QPushButton, QTextEdit, QLineEdit, QCheckBox,
+    QGroupBox, QFrame, QSizePolicy, QApplication,
 )
 
 from app.constants import APP_VERSION, MODE_PRESETS, LOGO_ICO_REL
 from app.ui.theme import DARK_QSS
-from app.ui.widgets import StatusPill, UptimeChip
+from app.ui.widgets import (
+    StatusPill, UptimeChip, ModeCardGroup, ToastManager,
+)
 from app.utils import resource_path
 
 
@@ -51,6 +55,10 @@ class MainWindow(QMainWindow):
 
         self.setMinimumSize(680, 580)
 
+        # Animation handle for smooth height changes (kept as attribute
+        # so Python doesn't garbage-collect it mid-flight).
+        self._height_anim: QPropertyAnimation | None = None
+
         self._build_ui()
         self._wire_internal_signals()
 
@@ -81,6 +89,10 @@ class MainWindow(QMainWindow):
         central = QWidget()
         central.setObjectName("centralWidget")
         self.setCentralWidget(central)
+
+        # Toast layer — children of the central widget, positioned manually.
+        self._toast_manager = ToastManager(central)
+
         root = QVBoxLayout(central)
         root.setContentsMargins(22, 22, 22, 18)
         root.setSpacing(14)
@@ -143,30 +155,21 @@ class MainWindow(QMainWindow):
         group = QGroupBox("DPI Circumvention Settings")
 
         layout = QVBoxLayout(group)
-        layout.setContentsMargins(18, 14, 18, 18)
+        layout.setContentsMargins(18, 18, 18, 18)
         layout.setSpacing(14)
-        layout.setSizeConstraint(QLayout.SetMinimumSize)
+        # NOTE: We intentionally do NOT set SetMinimumSize here. That
+        # constraint forced the group to always occupy its full sizeHint,
+        # which pushed the group under the Start/Stop row as soon as the
+        # Custom-arguments row appeared. The layout is now free to flex.
 
-        # ---- Mode row ----
-        mode_row = QHBoxLayout()
-        mode_row.setSpacing(14)
-
+        # ---- Mode label ----
         mode_label = QLabel("Mode")
         mode_label.setObjectName("fieldLabel")
-        mode_label.setFixedWidth(140)
+        layout.addWidget(mode_label)
 
-        self.mode_combo = QComboBox()
-        for label, _args, tooltip in MODE_PRESETS:
-            self.mode_combo.addItem(label)
-            self.mode_combo.setItemData(
-                self.mode_combo.count() - 1, tooltip, Qt.ToolTipRole
-            )
-        self.mode_combo.currentIndexChanged.connect(self._refresh_mode_tooltip)
-        self._refresh_mode_tooltip()
-
-        mode_row.addWidget(mode_label)
-        mode_row.addWidget(self.mode_combo, 1)
-        layout.addLayout(mode_row)
+        # ---- Mode cards ----
+        self.mode_cards = ModeCardGroup(MODE_PRESETS)
+        layout.addWidget(self.mode_cards)
 
         # ---- Custom args row (in a transparent container) ----
         self._custom_args_container = QWidget()
@@ -202,7 +205,7 @@ class MainWindow(QMainWindow):
         top_row.addWidget(self.custom_args_help_btn, 0)
         container_layout.addLayout(top_row)
 
-        # --- Validation status row (indented to match the edit field) ---
+        # --- Validation status row ---
         self._args_validation_label = QLabel("")
         self._args_validation_label.setObjectName("argsValidation")
         self._args_validation_label.setMinimumHeight(16)
@@ -212,7 +215,7 @@ class MainWindow(QMainWindow):
         )
 
         status_row = QHBoxLayout()
-        status_row.setContentsMargins(154, 0, 0, 0)   # 140 label + 14 spacing
+        status_row.setContentsMargins(154, 0, 0, 0)
         status_row.setSpacing(0)
         status_row.addWidget(self._args_validation_label, 1)
         container_layout.addLayout(status_row)
@@ -230,12 +233,6 @@ class MainWindow(QMainWindow):
         self._custom_args_container.setVisible(False)
 
         return group
-
-    # ------------------------------------------------------------------
-    def _refresh_mode_tooltip(self) -> None:
-        idx = self.mode_combo.currentIndex()
-        if 0 <= idx < len(MODE_PRESETS):
-            self.mode_combo.setToolTip(MODE_PRESETS[idx][2])
 
     # ------------------------------------------------------------------
     def _build_controls(self) -> QHBoxLayout:
@@ -343,8 +340,7 @@ class MainWindow(QMainWindow):
     def _wire_internal_signals(self) -> None:
         self.start_btn.clicked.connect(self.start_clicked.emit)
         self.stop_btn.clicked.connect(self.stop_clicked.emit)
-        self.mode_combo.currentIndexChanged.connect(self.mode_changed.emit)
-        self.mode_combo.currentIndexChanged.connect(self._refresh_mode_tooltip)
+        self.mode_cards.mode_changed.connect(self.mode_changed.emit)
         self.custom_args_edit.textEdited.connect(self.custom_args_changed.emit)
         self.autostart_check.toggled.connect(self.autostart_toggled.emit)
         self.check_update_btn.clicked.connect(self.check_update_clicked.emit)
@@ -367,13 +363,14 @@ class MainWindow(QMainWindow):
         self.start_btn.setEnabled(not running)
         self.stop_btn.setEnabled(running)
 
-    def set_mode_index(self, idx: int) -> None:
-        idx = max(0, min(idx, self.mode_combo.count() - 1))
-        self.mode_combo.blockSignals(True)
-        self.mode_combo.setCurrentIndex(idx)
-        self.mode_combo.blockSignals(False)
-        self._refresh_mode_tooltip()
+    # --- Mode ---------------------------------------------------------
+    def current_mode_index(self) -> int:
+        return self.mode_cards.current_index()
 
+    def set_mode_index(self, idx: int) -> None:
+        self.mode_cards.set_current_index(idx, emit=False)
+
+    # --- Custom args --------------------------------------------------
     def set_custom_args(self, text: str) -> None:
         self.custom_args_edit.setText(text)
 
@@ -382,24 +379,123 @@ class MainWindow(QMainWindow):
         self.autostart_check.setChecked(enabled)
         self.autostart_check.blockSignals(False)
 
-    def set_custom_args_visible(self, visible: bool) -> None:
-        """Show or hide the Custom-arguments row and force a relayout."""
+    # ------------------------------------------------------------------
+    def set_custom_args_visible(
+        self, visible: bool, animate: bool = True
+    ) -> None:
+        """Show or hide the Custom-arguments row.
+
+        When `animate` is True and the window is on screen, the window
+        height is smoothly adjusted so the new content fits without
+        pushing into the Start/Stop row.
+
+        When `animate` is False (e.g. during initial state restore),
+        visibility is flipped and the window only grows if its current
+        height is below the layout's minimum.
+        """
+        # isHidden() reflects the explicit "want to be visible" flag,
+        # which is what we care about (isVisible() also returns False
+        # when an ancestor is hidden, e.g. before the window is shown).
+        currently_visible = not self._custom_args_container.isHidden()
+        if currently_visible == visible:
+            return
+
+        central = self.centralWidget()
+        if central is None:
+            self._custom_args_container.setVisible(visible)
+            return
+
+        # Measure the layout's preferred height BEFORE the toggle.
+        old_hint = central.sizeHint().height()
+
         self._custom_args_container.setVisible(visible)
         self._custom_args_container.updateGeometry()
         self._settings_group.updateGeometry()
-        self._settings_group.adjustSize()
         self.updateGeometry()
+
+        # Force the layout engine to recompute synchronously.
+        if central.layout() is not None:
+            central.layout().activate()
+
+        new_hint = central.sizeHint().height()
+        delta = new_hint - old_hint
+
+        if delta == 0:
+            return
+
+        if not animate:
+            # Just make sure the window is not smaller than the minimum
+            # required by the new content. Never shrink here — respect
+            # whatever size the user had before.
+            min_h = max(
+                self.minimumHeight(),
+                self.minimumSizeHint().height(),
+            )
+            if self.height() < min_h:
+                self.resize(self.width(), min_h)
+            return
+
+        self._animate_height_delta(delta)
+
+    # ------------------------------------------------------------------
+    def _animate_height_delta(self, delta: int) -> None:
+        """Smoothly change the window height by `delta` pixels."""
+        if delta == 0:
+            return
+        if self.isMaximized() or self.isFullScreen():
+            return
+
+        # Determine the logical "base" height. If a height animation is
+        # already running, trust its intended end value rather than the
+        # current (mid-flight) geometry, so back-to-back toggles still
+        # land on the correct final size.
+        base_h = self.height()
+        if self._height_anim is not None and \
+                self._height_anim.state() == QPropertyAnimation.Running:
+            end_val = self._height_anim.endValue()
+            if isinstance(end_val, QRect):
+                base_h = end_val.height()
+
+        target_h = base_h + delta
+
+        # Clamp to the screen.
+        screen = self.screen() or QApplication.primaryScreen()
+        if screen is not None:
+            avail = screen.availableGeometry()
+            max_h = max(self.minimumHeight(), avail.height() - 40)
+            target_h = max(self.minimumHeight(), min(target_h, max_h))
+
+        if target_h == base_h:
+            return
+
+        # If the window isn't on screen yet, snap directly (no animation).
+        if not self.isVisible():
+            self.resize(self.width(), target_h)
+            return
+
+        # Cancel any in-flight height animation before starting a new one.
+        if self._height_anim is not None and \
+                self._height_anim.state() == QPropertyAnimation.Running:
+            self._height_anim.stop()
+
+        start_geo = self.geometry()
+        end_geo = QRect(
+            start_geo.x(), start_geo.y(),
+            start_geo.width(), target_h,
+        )
+
+        anim = QPropertyAnimation(self, b"geometry", self)
+        anim.setDuration(220)
+        anim.setStartValue(start_geo)
+        anim.setEndValue(end_geo)
+        anim.setEasingCurve(QEasingCurve.InOutCubic)
+        self._height_anim = anim
+        anim.start()
 
     # ------------------------------------------------------------------
     def set_args_validation(self, errors: list[str],
                             warnings: list[str]) -> None:
-        """Update the validation status line under the custom args field.
-
-        - Red   ✕ : errors found
-        - Yellow ⚠ : warnings only
-        - Green  ✓ : all good (only when there is input)
-        - Hidden  : empty input
-        """
+        """Update the validation status line under the custom args field."""
         lbl = self._args_validation_label
         args_empty = not self.custom_args_edit.text().strip()
 
@@ -468,9 +564,20 @@ class MainWindow(QMainWindow):
     def copy_log(self) -> str:
         return self.log_view.toPlainText()
 
-    def show_info(self, title: str, message: str) -> None:
-        from PySide6.QtWidgets import QMessageBox
-        QMessageBox.information(self, title, message)
+    # ------------------------------------------------------------------
+    # Toast notifications
+    # ------------------------------------------------------------------
+    def show_toast(
+        self,
+        message: str,
+        kind: str = "info",
+        duration: int = 3500,
+    ) -> None:
+        """Show an in-app toast at the bottom-right of the window.
+
+        kind: "info" | "success" | "warning" | "error"
+        """
+        self._toast_manager.show(message, kind, duration)
 
     # ------------------------------------------------------------------
     # Window close behaviour

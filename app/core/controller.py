@@ -10,6 +10,7 @@ from app.constants import (
     APP_VERSION,
     DPI_EXE_REL,
     MODE_PRESETS,
+    CUSTOM_MODE_INDEX,
     TASK_NAME,
     download_url,
 )
@@ -27,7 +28,6 @@ from app.validator import validate_args
 
 
 DPI_EXE = resource_path(DPI_EXE_REL)
-CUSTOM_MODE_INDEX = 2
 
 
 class AppController(QObject):
@@ -83,7 +83,10 @@ class AppController(QObject):
         self.window.set_custom_args(self._saved_custom_args)
         self.window.set_autostart(self._is_autostart_enabled())
 
-        self._apply_custom_args_state(idx)
+        # animate=False → no window resize animation during startup.
+        # If the restored geometry is too small for the Custom row,
+        # the window grows just enough to fit it (snap, no animation).
+        self._apply_custom_args_state(idx, animate=False)
         self._validate_custom_args()
 
     def _ensure_on_screen(self) -> None:
@@ -112,11 +115,11 @@ class AppController(QObject):
         if self.is_running:
             return
 
-        self.settings.mode_index = self.window.mode_combo.currentIndex()
+        idx = self.window.current_mode_index()
+        self.settings.mode_index = idx
         self.settings.custom_args = self.window.custom_args_edit.text()
         self.settings.sync()
 
-        idx = self.window.mode_combo.currentIndex()
         if idx == CUSTOM_MODE_INDEX:
             custom = self.window.custom_args_edit.text().strip()
 
@@ -138,7 +141,7 @@ class AppController(QObject):
 
             args = custom.split() if custom else []
         else:
-            args = list(MODE_PRESETS[idx][1])
+            args = list(MODE_PRESETS[idx].args)
 
         if not os.path.exists(DPI_EXE):
             QMessageBox.critical(
@@ -208,9 +211,11 @@ class AppController(QObject):
     # ------------------------------------------------------------------
     # Mode / custom args
     # ------------------------------------------------------------------
-    def _apply_custom_args_state(self, mode_idx: int) -> None:
+    def _apply_custom_args_state(
+        self, mode_idx: int, animate: bool = True
+    ) -> None:
         is_custom = (mode_idx == CUSTOM_MODE_INDEX)
-        self.window.set_custom_args_visible(is_custom)
+        self.window.set_custom_args_visible(is_custom, animate=animate)
 
     @Slot(int)
     def on_mode_changed(self, idx: int) -> None:
@@ -274,17 +279,13 @@ class AppController(QObject):
                      "/rl", "highest", "/f"],
                     capture_output=True, check=True, text=True,
                 )
-                QMessageBox.information(
-                    self.window, "Success", "Startup task created.",
-                )
+                self.window.show_toast("Startup task created", "success")
             else:
                 subprocess.run(
                     ["schtasks", "/delete", "/tn", TASK_NAME, "/f"],
                     capture_output=True, check=True, text=True,
                 )
-                QMessageBox.information(
-                    self.window, "Success", "Startup task removed.",
-                )
+                self.window.show_toast("Startup task removed", "success")
         except subprocess.CalledProcessError as e:
             QMessageBox.critical(
                 self.window, "Error",
@@ -324,10 +325,10 @@ class AppController(QObject):
     def copy_log_to_clipboard(self) -> None:
         text = self.window.copy_log()
         if not text.strip():
-            self.window.show_info("Copy Log", "The log is empty.")
+            self.window.show_toast("The log is empty", "warning")
             return
         QApplication.clipboard().setText(text)
-        self.window.show_info("Copy Log", "Log copied to clipboard.")
+        self.window.show_toast("Log copied to clipboard", "success")
 
     # ------------------------------------------------------------------
     # About
@@ -352,17 +353,18 @@ class AppController(QObject):
 
     @Slot()
     def on_up_to_date(self) -> None:
-        self.window.show_info(
-            "Check for updates",
-            f"You are running the latest version (v{APP_VERSION}).",
+        self.window.show_toast(
+            f"You're on the latest version (v{APP_VERSION})",
+            "success",
+            4000,
         )
 
     @Slot()
     def on_update_error(self) -> None:
-        self.window.show_info(
-            "Check for updates",
-            "Couldn't check for updates.\n"
-            "Please verify your internet connection and try again.",
+        self.window.show_toast(
+            "Couldn't check for updates — verify your connection",
+            "warning",
+            4500,
         )
 
     def _open_download(self, version: str) -> None:

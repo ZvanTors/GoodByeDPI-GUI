@@ -1,4 +1,5 @@
 """Application-wide constants."""
+from typing import List, NamedTuple
 
 APP_NAME = "GoodByeDPI GUI"
 APP_VERSION = "1.2.0"
@@ -35,29 +36,66 @@ WINDIVERT_URL = "https://www.reqrypt.org/windivert.html"
 DPI_EXE_REL  = "bin/goodbyedpi.exe"
 LOGO_ICO_REL = "assets/logo.ico"
 
-# Mode presets: (label, arguments, tooltip)
-MODE_PRESETS = [
-    ("Fast  —  Recommended",
-     ["-6"],
-     "Fast & aggressive bypass (GoodbyeDPI flag: -6).\n"
-     "Uses reverse fragmentation + fake SEQ.\n"
-     "Works for most ISPs."),
-    ("Compatible  —  Fallback",
-     ["-5"],
-     "Gentler bypass (GoodbyeDPI flag: -5).\n"
-     "Try this if Fast mode causes issues."),
-    ("Custom arguments",
-     [],
-     "Enter your own GoodbyeDPI command-line arguments."),
+
+# ---------------------------------------------------------------------
+# Mode presets (rendered as cards on the main window)
+# ---------------------------------------------------------------------
+class ModePreset(NamedTuple):
+    key:         str          # stable identifier, used for lookups
+    title:       str          # short name shown on the card
+    badge:       str          # small pill label ("" = none)
+    icon:        str          # single emoji / glyph
+    description: str          # one-line explanation under the title
+    args:        List[str]    # GoodbyeDPI arguments passed at start
+    tooltip:     str          # long hover text
+
+
+MODE_PRESETS: List[ModePreset] = [
+    ModePreset(
+        key="fast",
+        title="Fast",
+        badge="Recommended",
+        icon="⚡",
+        description="Reverse fragmentation + fake SEQ",
+        args=["-6"],
+        tooltip=(
+            "Fast & aggressive bypass (GoodbyeDPI flag: -6).\n"
+            "Uses reverse fragmentation + fake SEQ.\n"
+            "Works for most ISPs."
+        ),
+    ),
+    ModePreset(
+        key="compatible",
+        title="Compatible",
+        badge="Fallback",
+        icon="🛡",
+        description="Gentler fragmentation preset",
+        args=["-5"],
+        tooltip=(
+            "Gentler bypass (GoodbyeDPI flag: -5).\n"
+            "Try this if Fast mode causes issues."
+        ),
+    ),
+    ModePreset(
+        key="custom",
+        title="Custom",
+        badge="",
+        icon="🔧",
+        description="Your own GoodbyeDPI flags",
+        args=[],
+        tooltip="Enter your own GoodbyeDPI command-line arguments.",
+    ),
 ]
 
 
-def download_url(version: str) -> str:
-    """Build the direct download URL for a specific release tag.
+# Convenient lookups
+CUSTOM_MODE_INDEX = next(
+    (i for i, m in enumerate(MODE_PRESETS) if m.key == "custom"),
+    len(MODE_PRESETS) - 1,
+)
 
-    Example:
-        download_url("1.2.0") ->
-        https://github.com/ZvanTors/GoodByeDPI-GUI/releases/download/V1.2.0/GoodByeDPI.GUI.exe
-    """
+
+def download_url(version: str) -> str:
+    """Build the direct download URL for a specific release tag."""
     tag = version if version.startswith(("V", "v")) else f"V{version}"
     return f"{RELEASES_PAGE}/download/{tag}/{ASSET_NAME}"
