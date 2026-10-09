@@ -26,7 +26,7 @@
 
 <br>
 
-<img src="Screenshot.png" alt="GoodByeDPI GUI Screenshot" width="720">
+<img src="assets/Screenshot.png" alt="GoodByeDPI GUI Screenshot" width="720">
 
 </div>
 
