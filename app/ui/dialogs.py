@@ -1,9 +1,10 @@
 """Custom dialogs used by the application."""
-from PySide6.QtCore import Qt, QUrl
+from PySide6.QtCore import Qt, QUrl, QTimer
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QFrame, QWidget, QTabWidget, QScrollArea, QLineEdit,
+    QApplication,
 )
 
 from app.constants import (
@@ -797,3 +798,271 @@ class CustomArgsHelpDialog(QDialog):
     # ----------------------------------------------------------------
     def result_args(self) -> str:
         return self._preview.text().strip()
+
+
+# ----------------------------------------------------------------
+# Donation dialog
+# ----------------------------------------------------------------
+class DonateDialog(QDialog):
+    """A friendly dialog showing the donation wallet addresses."""
+
+    def __init__(self, parent, wallet: str, tronscan_url: str):
+        super().__init__(parent)
+        self.setWindowTitle("Support GoodByeDPI GUI")
+        self.setModal(True)
+        self.setFixedWidth(520)
+        self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
+
+        self._wallet = wallet
+        self._tronscan_url = tronscan_url
+
+        self.setStyleSheet("""
+            QDialog { background-color: #11111b; }
+            QLabel { color: #cdd6f4; background: transparent; }
+
+            QLabel#donateTitle {
+                color: #f5f5f5; font-size: 15pt;
+                font-weight: 800; letter-spacing: -0.3px;
+            }
+            QLabel#donateSubtitle {
+                color: #a6adc8; font-size: 9.5pt;
+            }
+
+            /* Asset chips */
+            QFrame#assetChip {
+                background-color: #1e1e2e;
+                border: 1px solid #313244;
+                border-radius: 10px;
+            }
+            QLabel#assetName {
+                color: #cdd6f4; font-size: 10pt; font-weight: 700;
+            }
+            QLabel#assetTag {
+                color: #6c7086; font-size: 8.5pt; font-weight: 600;
+                letter-spacing: 0.5px;
+            }
+
+            /* Wallet address box */
+            QFrame#walletBox {
+                background-color: #0d0d15;
+                border: 1px solid #262637;
+                border-radius: 12px;
+            }
+            QLabel#walletLabel {
+                color: #6c7086; font-size: 8.5pt;
+                font-weight: 700; letter-spacing: 1.0px;
+            }
+            QLabel#walletValue {
+                color: #a6e3a1;
+                font-family: 'Cascadia Code', 'JetBrains Mono', 'Consolas', monospace;
+                font-size: 10.5pt; font-weight: 700;
+                letter-spacing: 0.5px;
+            }
+
+            /* Warning box */
+            QFrame#warningBox {
+                background-color: rgba(249, 226, 175, 0.08);
+                border: 1px solid rgba(249, 226, 175, 0.30);
+                border-radius: 10px;
+            }
+            QLabel#warningText {
+                color: #f9e2af; font-size: 9pt;
+            }
+            QLabel#warningIcon {
+                color: #f9e2af; font-size: 11pt; font-weight: 800;
+            }
+
+            /* Buttons */
+            QPushButton#copyBtn {
+                background-color: rgba(166, 227, 161, 0.10);
+                color: #a6e3a1;
+                border: 1px solid rgba(166, 227, 161, 0.30);
+                border-radius: 8px;
+                padding: 8px 16px;
+                font-weight: 700; font-size: 9pt;
+                min-width: 80px; min-height: 0;
+            }
+            QPushButton#copyBtn:hover {
+                background-color: rgba(166, 227, 161, 0.20);
+                border-color: rgba(166, 227, 161, 0.55);
+            }
+            QPushButton#copyBtn:pressed {
+                background-color: rgba(166, 227, 161, 0.32);
+            }
+
+            QPushButton#tronscanBtn {
+                background-color: #313244;
+                border: 1px solid #45475a;
+                border-radius: 9px;
+                padding: 10px 20px;
+                color: #cdd6f4;
+                font-weight: 600; min-width: 140px;
+            }
+            QPushButton#tronscanBtn:hover   { background-color: #45475a; border-color: #585b70; }
+            QPushButton#tronscanBtn:pressed { background-color: #585b70; }
+
+            QPushButton#donateCloseBtn {
+                background-color: #89b4fa;
+                border: none; border-radius: 9px;
+                padding: 10px 22px;
+                color: #11111b;
+                font-weight: 700; min-width: 100px;
+            }
+            QPushButton#donateCloseBtn:hover   { background-color: #a5c8ff; }
+            QPushButton#donateCloseBtn:pressed { background-color: #74a0e0; }
+        """)
+
+        root = QVBoxLayout(self)
+        root.setContentsMargins(28, 26, 28, 24)
+        root.setSpacing(16)
+
+        root.addLayout(self._build_header())
+        root.addLayout(self._build_asset_row())
+        root.addWidget(self._build_wallet_box())
+        root.addWidget(self._build_warning())
+        root.addLayout(self._build_footer())
+
+    # ----------------------------------------------------------------
+    def _build_header(self) -> QHBoxLayout:
+        row = QHBoxLayout()
+        row.setSpacing(14)
+
+        icon = QLabel("❤")
+        icon.setStyleSheet("font-size: 34pt; color: #f38ba8; background: transparent;")
+        icon.setFixedWidth(52)
+        icon.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
+        row.addWidget(icon)
+
+        text_col = QVBoxLayout()
+        text_col.setSpacing(3)
+
+        title = QLabel("Support the Project")
+        title.setObjectName("donateTitle")
+
+        subtitle = QLabel(
+            "GoodByeDPI GUI is free, open source, and built with love.<br>"
+            "If it helped you browse freely, consider a small donation."
+        )
+        subtitle.setObjectName("donateSubtitle")
+        subtitle.setTextFormat(Qt.RichText)
+        subtitle.setWordWrap(True)
+
+        text_col.addWidget(title)
+        text_col.addWidget(subtitle)
+        row.addLayout(text_col, 1)
+        return row
+
+    # ----------------------------------------------------------------
+    def _build_asset_row(self) -> QHBoxLayout:
+        row = QHBoxLayout()
+        row.setSpacing(10)
+        row.addWidget(self._build_asset_chip("TRX", "TRON Network"))
+        row.addWidget(self._build_asset_chip("USDT", "TRC20 · Tether"))
+        return row
+
+    def _build_asset_chip(self, name: str, tag: str) -> QFrame:
+        chip = QFrame()
+        chip.setObjectName("assetChip")
+        chip.setAttribute(Qt.WA_StyledBackground, True)
+
+        layout = QVBoxLayout(chip)
+        layout.setContentsMargins(14, 10, 14, 10)
+        layout.setSpacing(2)
+
+        name_lbl = QLabel(name)
+        name_lbl.setObjectName("assetName")
+        tag_lbl = QLabel(tag)
+        tag_lbl.setObjectName("assetTag")
+
+        layout.addWidget(name_lbl)
+        layout.addWidget(tag_lbl)
+        return chip
+
+    # ----------------------------------------------------------------
+    def _build_wallet_box(self) -> QFrame:
+        frame = QFrame()
+        frame.setObjectName("walletBox")
+        frame.setAttribute(Qt.WA_StyledBackground, True)
+
+        layout = QVBoxLayout(frame)
+        layout.setContentsMargins(18, 14, 14, 14)
+        layout.setSpacing(8)
+
+        label = QLabel("WALLET ADDRESS")
+        label.setObjectName("walletLabel")
+        layout.addWidget(label)
+
+        row = QHBoxLayout()
+        row.setSpacing(10)
+
+        addr = QLabel(self._wallet)
+        addr.setObjectName("walletValue")
+        addr.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        addr.setCursor(Qt.IBeamCursor)
+
+        self._copy_btn = QPushButton("Copy")
+        self._copy_btn.setObjectName("copyBtn")
+        self._copy_btn.setCursor(Qt.PointingHandCursor)
+        self._copy_btn.clicked.connect(self._copy_address)
+
+        row.addWidget(addr, 1)
+        row.addWidget(self._copy_btn, 0)
+        layout.addLayout(row)
+
+        return frame
+
+    def _copy_address(self) -> None:
+        QApplication.clipboard().setText(self._wallet)
+        self._copy_btn.setText("✓  Copied")
+        QTimer.singleShot(1500, lambda: self._copy_btn.setText("Copy"))
+
+    # ----------------------------------------------------------------
+    def _build_warning(self) -> QFrame:
+        frame = QFrame()
+        frame.setObjectName("warningBox")
+        frame.setAttribute(Qt.WA_StyledBackground, True)
+
+        layout = QHBoxLayout(frame)
+        layout.setContentsMargins(14, 10, 14, 10)
+        layout.setSpacing(10)
+
+        icon = QLabel("⚠")
+        icon.setObjectName("warningIcon")
+        icon.setFixedWidth(16)
+        icon.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
+
+        text = QLabel(
+            "Only send <b>TRX</b> or <b>USDT (TRC20)</b> to this address.<br>"
+            "Other assets or networks (ERC20, BEP20, …) will result in "
+            "<b>permanent loss of funds</b>."
+        )
+        text.setObjectName("warningText")
+        text.setTextFormat(Qt.RichText)
+        text.setWordWrap(True)
+
+        layout.addWidget(icon, 0, Qt.AlignTop)
+        layout.addWidget(text, 1)
+        return frame
+
+    # ----------------------------------------------------------------
+    def _build_footer(self) -> QHBoxLayout:
+        row = QHBoxLayout()
+        row.setSpacing(10)
+
+        tronscan_btn = QPushButton("🔗  View on Tronscan")
+        tronscan_btn.setObjectName("tronscanBtn")
+        tronscan_btn.setCursor(Qt.PointingHandCursor)
+        tronscan_btn.clicked.connect(self._open_tronscan)
+
+        close_btn = QPushButton("Close")
+        close_btn.setObjectName("donateCloseBtn")
+        close_btn.setDefault(True)
+        close_btn.clicked.connect(self.accept)
+
+        row.addWidget(tronscan_btn)
+        row.addStretch()
+        row.addWidget(close_btn)
+        return row
+
+    def _open_tronscan(self) -> None:
+        QDesktopServices.openUrl(QUrl(self._tronscan_url))

@@ -30,6 +30,10 @@ GOODBYEDPI_URL = "https://github.com/ValdikSS/GoodbyeDPI"
 PYSIDE_URL = "https://pypi.org/project/PySide6/"
 WINDIVERT_URL = "https://www.reqrypt.org/windivert.html"
 
+# Donation
+WALLET_ADDRESS = "TWukNBmxLUbPVgayRsZ72u84K8yW7K9cQw"
+TRONSCAN_URL = f"https://tronscan.org/#/address/{WALLET_ADDRESS}"
+
 # ---------------------------------------------------------------------
 # Bundled resource paths (relative — resolved via utils.resource_path)
 # ---------------------------------------------------------------------

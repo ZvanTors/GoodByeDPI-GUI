@@ -33,6 +33,7 @@ class MainWindow(QMainWindow):
     autostart_toggled        = Signal(bool)
     close_choice             = Signal(str)
     check_update_clicked     = Signal()
+    donate_clicked           = Signal()
     clear_log_clicked        = Signal()
     copy_log_clicked         = Signal()
     about_clicked            = Signal()
@@ -299,9 +300,15 @@ class MainWindow(QMainWindow):
         self.check_update_btn.setCursor(Qt.PointingHandCursor)
         self.check_update_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
+        self.donate_btn = QPushButton("❤  Donate")
+        self.donate_btn.setObjectName("donateBtn")
+        self.donate_btn.setCursor(Qt.PointingHandCursor)
+        self.donate_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+
         credit = self._build_credit_badge()
 
         row.addWidget(self.check_update_btn, 0, Qt.AlignVCenter)
+        row.addWidget(self.donate_btn, 0, Qt.AlignVCenter)
         row.addStretch()
         row.addWidget(credit, 0, Qt.AlignVCenter)
         return row
@@ -344,6 +351,7 @@ class MainWindow(QMainWindow):
         self.custom_args_edit.textEdited.connect(self.custom_args_changed.emit)
         self.autostart_check.toggled.connect(self.autostart_toggled.emit)
         self.check_update_btn.clicked.connect(self.check_update_clicked.emit)
+        self.donate_btn.clicked.connect(self.donate_clicked.emit)
         self.clear_log_btn.clicked.connect(self.clear_log_clicked.emit)
         self.copy_log_btn.clicked.connect(self.copy_log_clicked.emit)
         self.custom_args_help_btn.clicked.connect(

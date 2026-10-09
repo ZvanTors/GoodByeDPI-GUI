@@ -12,12 +12,15 @@ from app.constants import (
     MODE_PRESETS,
     CUSTOM_MODE_INDEX,
     TASK_NAME,
+    WALLET_ADDRESS,
+    TRONSCAN_URL,
     download_url,
 )
 from app.ui.dialogs import (
     UpdateDialog,
     AboutDialog,
     CustomArgsHelpDialog,
+    DonateDialog,
 )
 from app.settings import AppSettings
 from app.ui.tray import TrayManager
@@ -57,6 +60,7 @@ class AppController(QObject):
         self.window.autostart_toggled.connect(self.on_autostart_toggled)
         self.window.close_choice.connect(self.on_close_choice)
         self.window.check_update_clicked.connect(self.check_for_updates_manual)
+        self.window.donate_clicked.connect(self.show_donate)
         self.window.clear_log_clicked.connect(self.window.clear_log)
         self.window.copy_log_clicked.connect(self.copy_log_to_clipboard)
         self.window.about_clicked.connect(self.show_about)
@@ -336,6 +340,14 @@ class AppController(QObject):
     @Slot()
     def show_about(self) -> None:
         dlg = AboutDialog(self.window, APP_VERSION)
+        dlg.exec()
+
+    # ------------------------------------------------------------------
+    # Donate
+    # ------------------------------------------------------------------
+    @Slot()
+    def show_donate(self) -> None:
+        dlg = DonateDialog(self.window, WALLET_ADDRESS, TRONSCAN_URL)
         dlg.exec()
 
     # ------------------------------------------------------------------

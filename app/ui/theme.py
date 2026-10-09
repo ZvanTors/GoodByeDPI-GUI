@@ -307,6 +307,21 @@ QPushButton#updateBtn {
 QPushButton#updateBtn:hover   { background-color: #a5c8ff; }
 QPushButton#updateBtn:pressed { background-color: #74a0e0; }
 
+QPushButton#donateBtn {
+    background-color: #f38ba8;
+    color: #11111b;
+    border: none;
+    border-radius: 10px;
+    padding: 9px 18px;
+    font-size: 9pt;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    min-width: 0;
+    min-height: 0;
+}
+QPushButton#donateBtn:hover   { background-color: #eba0ac; }
+QPushButton#donateBtn:pressed { background-color: #e64553; }
+
 QPushButton#smallBtn {
     min-width: 80px;
     padding: 6px 16px;
