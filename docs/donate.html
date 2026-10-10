@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Support Me — Crypto Donations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #07080c;
+    --bg-2: #0c0e14;
+    --card: rgba(255, 255, 255, 0.035);
+    --card-hover: rgba(255, 255, 255, 0.06);
+    --border: rgba(255, 255, 255, 0.08);
+    --border-hover: rgba(255, 255, 255, 0.16);
+    --text: #f2f4f8;
+    --text-dim: #8b90a0;
+    --text-faint: #5a5f6e;
+    --accent: #6ee7b7;
+    --accent-2: #38bdf8;
+    --accent-3: #a78bfa;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Ambient background glows */
+  body::before,
+  body::after {
+    content: '';
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(140px);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+  }
+  body::before {
+    width: 520px; height: 520px;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.28), transparent 70%);
+    top: -180px; left: -160px;
+    animation: float1 18s ease-in-out infinite;
+  }
+  body::after {
+    width: 560px; height: 560px;
+    background: radial-gradient(circle, rgba(167, 139, 250, 0.24), transparent 70%);
+    bottom: -220px; right: -180px;
+    animation: float2 22s ease-in-out infinite;
+  }
+  @keyframes float1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(60px, 40px) scale(1.1); }
+  }
+  @keyframes float2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-50px, -50px) scale(1.08); }
+  }
+
+  /* Subtle grid overlay */
+  .grid-overlay {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.022) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, #000 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, #000 30%, transparent 75%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 72px 24px 96px;
+  }
+
+  /* ===== Header ===== */
+  header {
+    text-align: center;
+    margin-bottom: 64px;
+    animation: rise 0.8s cubic-bezier(.22,1,.36,1) both;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 16px;
+    border-radius: 100px;
+    background: rgba(110, 231, 183, 0.08);
+    border: 1px solid rgba(110, 231, 183, 0.22);
+    color: var(--accent);
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    margin-bottom: 26px;
+  }
+  .badge .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  h1 {
+    font-size: clamp(2.1rem, 5.5vw, 3.4rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.08;
+    margin-bottom: 18px;
+    background: linear-gradient(180deg, #ffffff 0%, #b8bcc9 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  header p {
+    color: var(--text-dim);
+    font-size: clamp(0.95rem, 2vw, 1.08rem);
+    max-width: 540px;
+    margin: 0 auto;
+    line-height: 1.65;
+  }
+
+  /* ===== Grid ===== */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 18px;
+  }
+
+  .card {
+    position: relative;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transition: transform 0.35s cubic-bezier(.22,1,.36,1),
+                border-color 0.35s ease,
+                background 0.35s ease,
+                box-shadow 0.35s ease;
+    overflow: hidden;
+    animation: rise 0.8s cubic-bezier(.22,1,.36,1) both;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.14), transparent 45%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-4px);
+    background: var(--card-hover);
+    border-color: var(--border-hover);
+    box-shadow: 0 20px 50px -18px rgba(0,0,0,0.75),
+                0 0 0 1px rgba(255,255,255,0.03);
+  }
+  .card:hover::before { opacity: 1; }
+
+  .card:nth-child(1) { animation-delay: 0.06s; }
+  .card:nth-child(2) { animation-delay: 0.12s; }
+  .card:nth-child(3) { animation-delay: 0.18s; }
+  .card:nth-child(4) { animation-delay: 0.24s; }
+  .card:nth-child(5) { animation-delay: 0.30s; }
+  .card:nth-child(6) { animation-delay: 0.36s; }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(22px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Card head */
+  .card-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .icon {
+    width: 44px; height: 44px;
+    flex-shrink: 0;
+    border-radius: 13px;
+    display: grid;
+    place-items: center;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: transform 0.35s cubic-bezier(.22,1,.36,1);
+  }
+  .card:hover .icon { transform: scale(1.06) rotate(-3deg); }
+  .icon svg { width: 24px; height: 24px; display: block; }
+
+  .title { min-width: 0; flex: 1; }
+  .title h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 3px;
+  }
+  .title span {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text-faint);
+    letter-spacing: 0.3px;
+  }
+
+  .tag {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 4px 9px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+  .tag.trc { background: rgba(255, 60, 60, 0.12); color: #ff6b6b; border: 1px solid rgba(255,60,60,0.22); }
+  .tag.bep { background: rgba(240, 185, 11, 0.12); color: #f0b90b; border: 1px solid rgba(240,185,11,0.22); }
+  .tag.erc { background: rgba(139, 146, 255, 0.12); color: #8b92ff; border: 1px solid rgba(139,146,255,0.22); }
+
+  /* Address row */
+  .addr {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,0,0,0.32);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 10px 10px 10px 14px;
+    transition: border-color 0.3s ease, background 0.3s ease;
+  }
+  .card:hover .addr { border-color: rgba(255,255,255,0.11); }
+
+  .addr code {
+    flex: 1;
+    min-width: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: #c9ced9;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    letter-spacing: -0.2px;
+    user-select: all;
+  }
+
+  .actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .btn-icon {
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    border: 1px solid rgba(255,255,255,0.09);
+    background: rgba(255,255,255,0.04);
+    color: var(--text-dim);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: all 0.25s cubic-bezier(.22,1,.36,1);
+    position: relative;
+  }
+  .btn-icon:hover {
+    background: rgba(110, 231, 183, 0.12);
+    border-color: rgba(110, 231, 183, 0.35);
+    color: var(--accent);
+    transform: translateY(-1px);
+  }
+  .btn-icon:active { transform: translateY(0) scale(0.94); }
+  .btn-icon svg { width: 15px; height: 15px; }
+
+  .btn-icon.done {
+    background: rgba(110, 231, 183, 0.18);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* Icon swaps for copy */
+  .btn-icon .ic-check { display: none; }
+  .btn-icon.done .ic-copy { display: none; }
+  .btn-icon.done .ic-check { display: block; }
+
+  /* Full-width cards for long addresses */
+  .card.wide { grid-column: 1 / -1; }
+  .card.wide .addr code { font-size: 13px; }
+
+  /* ===== Footer ===== */
+  footer {
+    text-align: center;
+    margin-top: 72px;
+    padding-top: 32px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    color: var(--text-faint);
+    font-size: 13px;
+    animation: rise 0.8s cubic-bezier(.22,1,.36,1) 0.4s both;
+  }
+  footer .heart { color: #ff5c8a; }
+
+  /* ===== Toast ===== */
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translate(-50%, 90px);
+    background: rgba(16, 20, 28, 0.92);
+    border: 1px solid rgba(110, 231, 183, 0.3);
+    color: var(--accent);
+    padding: 13px 22px;
+    border-radius: 14px;
+    font-size: 13.5px;
+    font-weight: 600;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 16px 40px -10px rgba(0,0,0,0.8);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.45s cubic-bezier(.22,1,.36,1), opacity 0.35s ease;
+    z-index: 100;
+  }
+  .toast.show {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+  .toast svg { width: 16px; height: 16px; }
+
+  /* ===== QR Modal ===== */
+  .qr-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(4, 6, 10, 0.78);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 200;
+  }
+  .qr-modal.show {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .qr-box {
+    position: relative;
+    width: 100%;
+    max-width: 360px;
+    background: linear-gradient(180deg, rgba(22, 26, 36, 0.96), rgba(14, 17, 24, 0.96));
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 24px;
+    padding: 32px 26px 26px;
+    text-align: center;
+    box-shadow: 0 30px 80px -20px rgba(0,0,0,0.9),
+                0 0 0 1px rgba(255,255,255,0.02),
+                inset 0 1px 0 rgba(255,255,255,0.05);
+    transform: scale(0.9) translateY(12px);
+    transition: transform 0.45s cubic-bezier(.22,1,.36,1);
+  }
+  .qr-modal.show .qr-box {
+    transform: scale(1) translateY(0);
+  }
+
+  .qr-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 32px; height: 32px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.03);
+    color: var(--text-dim);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: all 0.25s ease;
+  }
+  .qr-close:hover {
+    background: rgba(255, 92, 138, 0.12);
+    border-color: rgba(255, 92, 138, 0.35);
+    color: #ff5c8a;
+  }
+  .qr-close svg { width: 15px; height: 15px; }
+
+  .qr-head {
+    margin-bottom: 20px;
+  }
+  .qr-head .qr-net {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: rgba(110, 231, 183, 0.1);
+    color: var(--accent);
+    border: 1px solid rgba(110, 231, 183, 0.22);
+    margin-bottom: 10px;
+  }
+  .qr-head h4 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+
+  .qr-frame {
+    display: inline-grid;
+    place-items: center;
+    padding: 16px;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 10px 30px -8px rgba(0,0,0,0.5),
+                0 0 0 1px rgba(255,255,255,0.06);
+    margin-bottom: 20px;
+    transition: transform 0.4s cubic-bezier(.22,1,.36,1);
+  }
+  .qr-modal.show .qr-frame {
+    animation: qrPop 0.55s cubic-bezier(.22,1,.36,1) 0.1s both;
+  }
+  @keyframes qrPop {
+    from { transform: scale(0.7); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+  #qrCode img, #qrCode canvas {
+    display: block;
+    width: 200px !important;
+    height: 200px !important;
+    border-radius: 4px;
+  }
+
+  .qr-addr {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    color: var(--text-dim);
+    word-break: break-all;
+    line-height: 1.6;
+    padding: 0 4px;
+    margin-bottom: 18px;
+  }
+
+  .qr-copy {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(110, 231, 183, 0.28);
+    background: rgba(110, 231, 183, 0.1);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(.22,1,.36,1);
+  }
+  .qr-copy:hover {
+    background: rgba(110, 231, 183, 0.18);
+    border-color: rgba(110, 231, 183, 0.5);
+    transform: translateY(-1px);
+  }
+  .qr-copy:active { transform: translateY(0); }
+  .qr-copy svg { width: 14px; height: 14px; }
+
+  /* Mobile */
+  @media (max-width: 560px) {
+    .wrap { padding: 48px 16px 72px; }
+    .grid { grid-template-columns: 1fr; gap: 14px; }
+    .card { padding: 18px; border-radius: 17px; }
+    .icon { width: 40px; height: 40px; border-radius: 11px; }
+    .addr code { font-size: 11.5px; }
+    .addr { padding: 8px 8px 8px 12px; gap: 6px; }
+    .btn-icon { width: 32px; height: 32px; }
+    header { margin-bottom: 44px; }
+    #qrCode img, #qrCode canvas {
+      width: 180px !important;
+      height: 180px !important;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="grid-overlay"></div>
+
+<div class="wrap">
+  <header>
+    <div class="badge"><span class="dot"></span> Crypto Donations</div>
+    <h1>Support My Work</h1>
+    <p>Every contribution helps me keep creating. Pick your preferred network below and send directly — no middlemen, no fees.</p>
+  </header>
+
+  <main class="grid">
+
+    <!-- Tron -->
+    <div class="card">
+      <div class="card-head">
+        <div class="icon">
+          <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 5.5l9.2 1.3 9.3 6.9-7.4 8.9L3 5.5z" fill="#FF060A"/>
+            <path d="M12.2 6.8L3 5.5l11.1 17.1 7.4-8.9-9.3-6.9z" fill="#FF060A" opacity=".85"/>
+            <path d="M3 5.5l20.5 8.2-7.4 8.9L3 5.5z" fill="none" stroke="#fff" stroke-width="1.1" stroke-linejoin="round" opacity=".9"/>
+          </svg>
+        </div>
+        <div class="title">
+          <h3>Tron</h3>
+          <span>TRX · TRC-20 Network</span>
+        </div>
+      </div>
+      <div class="addr">
+        <code>TWukNBmxLUbPVgayRsZ72u84K8yW7K9cQw</code>
+        <div class="actions">
+          <button class="btn-icon qr-btn" data-addr="TWukNBmxLUbPVgayRsZ72u84K8yW7K9cQw" data-name="Tron" data-net="TRC-20" aria-label="Show QR code">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM21 14v0M21 17h-3M14 21h3M21 21h-3"/></svg>
+          </button>
+          <button class="btn-icon copy" data-addr="TWukNBmxLUbPVgayRsZ72u84K8yW7K9cQw" aria-label="Copy Tron address">
+            <svg class="ic-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <svg class="ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- USDT TRC-20 -->
+    <div class="card">
+      <div class="card-head">
+        <div class="icon">
+          <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="16" cy="16" r="14" fill="#26A17B"/>
+            <path d="M17.9 14.1v-2.3h4.6V8.4H9.5v3.4h4.6v2.3c-3.8.2-6.6 1-6.6 1.9s2.8 1.7 6.6 1.9v6.7h3.8v-6.7c3.8-.2 6.6-1 6.6-1.9s-2.8-1.7-6.6-1.9zm0 3.2v-.1c-.1 0-.6 0-1.7 0-.9 0-1.5 0-1.7-.1-3.1-.2-5.5-.7-5.5-1.3s2.3-1.1 5.5-1.3v2c.2 0 .8.1 1.7.1 1.1 0 1.6 0 1.7-.1v-2c3.1.2 5.5.7 5.5 1.3s-2.4 1.1-5.5 1.3z" fill="#fff"/>
+          </svg>
+        </div>
+        <div class="title">
+          <h3>USDT</h3>
+          <span>Tether USD</span>
+        </div>
+        <span class="tag trc">TRC-20</span>
+      </div>
+      <div class="addr">
+        <code>TWukNBmxLUbPVgayRsZ72u84K8yW7K9cQw</code>
+        <div class="actions">
+          <button class="btn-icon qr-btn" data-addr="TWukNBmxLUbPVgayRsZ72u84K8yW7K9cQw" data-name="USDT" data-net="TRC-20" aria-label="Show QR code">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM21 14v0M21 17h-3M14 21h3M21 21h-3"/></svg>
+          </button>
+          <button class="btn-icon copy" data-addr="TWukNBmxLUbPVgayRsZ72u84K8yW7K9cQw" aria-label="Copy USDT TRC-20 address">
+            <svg class="ic-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <svg class="ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- USDT BEP-20 -->
+    <div class="card">
+      <div class="card-head">
+        <div class="icon">
+          <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="16" cy="16" r="14" fill="#26A17B"/>
+            <path d="M17.9 14.1v-2.3h4.6V8.4H9.5v3.4h4.6v2.3c-3.8.2-6.6 1-6.6 1.9s2.8 1.7 6.6 1.9v6.7h3.8v-6.7c3.8-.2 6.6-1 6.6-1.9s-2.8-1.7-6.6-1.9zm0 3.2v-.1c-.1 0-.6 0-1.7 0-.9 0-1.5 0-1.7-.1-3.1-.2-5.5-.7-5.5-1.3s2.3-1.1 5.5-1.3v2c.2 0 .8.1 1.7.1 1.1 0 1.6 0 1.7-.1v-2c3.1.2 5.5.7 5.5 1.3s-2.4 1.1-5.5 1.3z" fill="#fff"/>
+          </svg>
+        </div>
+        <div class="title">
+          <h3>USDT</h3>
+          <span>Tether USD</span>
+        </div>
+        <span class="tag bep">BEP-20</span>
+      </div>
+      <div class="addr">
+        <code>0x53f03070E2b6157fCaF48688b3426fA131c8175B</code>
+        <div class="actions">
+          <button class="btn-icon qr-btn" data-addr="0x53f03070E2b6157fCaF48688b3426fA131c8175B" data-name="USDT" data-net="BEP-20" aria-label="Show QR code">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM21 14v0M21 17h-3M14 21h3M21 21h-3"/></svg>
+          </button>
+          <button class="btn-icon copy" data-addr="0x53f03070E2b6157fCaF48688b3426fA131c8175B" aria-label="Copy USDT BEP-20 address">
+            <svg class="ic-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <svg class="ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bitcoin -->
+    <div class="card">
+      <div class="card-head">
+        <div class="icon">
+          <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="16" cy="16" r="14" fill="#F7931A"/>
+            <path d="M21.6 14.2c.3-2-1.2-3.1-3.3-3.8l.7-2.7-1.7-.4-.7 2.6c-.4-.1-.9-.2-1.4-.3l.7-2.7-1.7-.4-.7 2.7c-.3-.1-.7-.1-1-.2l-2.3-.6-.4 1.8s1.2.3 1.2.3c.7.2.8.6.8 1l-.8 3.2c0 0 .1 0 .1.1l-.1 0-1.1 4.5c-.1.2-.3.5-.7.4 0 0-1.2-.3-1.2-.3l-.8 1.9 2.2.5c.4.1.8.2 1.2.3l-.7 2.8 1.7.4.7-2.7c.5.1.9.2 1.4.3l-.7 2.7 1.7.4.7-2.8c2.9.6 5.1.3 6-2.3.7-2.1 0-3.3-1.6-4.1 1.1-.2 1.9-1 2.2-2.5zm-4 5.3c-.5 2.1-4.1 1-5.2.7l.9-3.7c1.2.3 4.9.9 4.3 3zm.5-5.4c-.5 1.9-3.5.9-4.4.7l.8-3.4c.9.2 4.1.7 3.6 2.7z" fill="#fff"/>
+          </svg>
+        </div>
+        <div class="title">
+          <h3>Bitcoin</h3>
+          <span>BTC · Native SegWit</span>
+        </div>
+      </div>
+      <div class="addr">
+        <code>bc1qt97afeun93602wuk34duj4rpxag8dt5nws4p4z</code>
+        <div class="actions">
+          <button class="btn-icon qr-btn" data-addr="bc1qt97afeun93602wuk34duj4rpxag8dt5nws4p4z" data-name="Bitcoin" data-net="BTC" aria-label="Show QR code">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM21 14v0M21 17h-3M14 21h3M21 21h-3"/></svg>
+          </button>
+          <button class="btn-icon copy" data-addr="bc1qt97afeun93602wuk34duj4rpxag8dt5nws4p4z" aria-label="Copy Bitcoin address">
+            <svg class="ic-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <svg class="ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ethereum -->
+    <div class="card">
+      <div class="card-head">
+        <div class="icon">
+          <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="16" cy="16" r="14" fill="#627EEA"/>
+            <g fill="#fff">
+              <path d="M16.5 4v8.9l7.5 3.3z" fill-opacity=".6"/>
+              <path d="M16.5 4L9 16.2l7.5-3.3z"/>
+              <path d="M16.5 21.9V28l7.5-10.4z" fill-opacity=".6"/>
+              <path d="M16.5 28v-6.1L9 17.6z"/>
+              <path d="M16.5 20.5l7.5-4.3-7.5-3.3z" fill-opacity=".2"/>
+              <path d="M9 16.2l7.5 4.3v-7.6z" fill-opacity=".6"/>
+            </g>
+          </svg>
+        </div>
+        <div class="title">
+          <h3>Ethereum</h3>
+          <span>ETH · ERC-20 Network</span>
+        </div>
+        <span class="tag erc">ERC-20</span>
+      </div>
+      <div class="addr">
+        <code>0x53f03070E2b6157fCaF48688b3426fA131c8175B</code>
+        <div class="actions">
+          <button class="btn-icon qr-btn" data-addr="0x53f03070E2b6157fCaF48688b3426fA131c8175B" data-name="Ethereum" data-net="ERC-20" aria-label="Show QR code">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM21 14v0M21 17h-3M14 21h3M21 21h-3"/></svg>
+          </button>
+          <button class="btn-icon copy" data-addr="0x53f03070E2b6157fCaF48688b3426fA131c8175B" aria-label="Copy Ethereum address">
+            <svg class="ic-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <svg class="ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BNB Smart Chain -->
+    <div class="card">
+      <div class="card-head">
+        <div class="icon">
+          <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="16" cy="16" r="14" fill="#F0B90B"/>
+            <path d="M16 6l6 6-6 6-6-6 6-6z" fill="#fff"/>
+            <path d="M16 10l2 2-2 2-2-2 2-2z" fill="#F0B90B"/>
+          </svg>
+        </div>
+        <div class="title">
+          <h3>BNB</h3>
+          <span>BNB Smart Chain</span>
+        </div>
+        <span class="tag bep">BEP-20</span>
+      </div>
+      <div class="addr">
+        <code>0x53f03070E2b6157fCaF48688b3426fA131c8175B</code>
+        <div class="actions">
+          <button class="btn-icon qr-btn" data-addr="0x53f03070E2b6157fCaF48688b3426fA131c8175B" data-name="BNB" data-net="BEP-20" aria-label="Show QR code">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM21 14v0M21 17h-3M14 21h3M21 21h-3"/></svg>
+          </button>
+          <button class="btn-icon copy" data-addr="0x53f03070E2b6157fCaF48688b3426fA131c8175B" aria-label="Copy BNB address">
+            <svg class="ic-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <svg class="ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>Made with <span class="heart">♥</span> — Thank you for your support</p>
+  </footer>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="toastText">Address copied!</span>
+</div>
+
+<!-- QR Modal -->
+<div class="qr-modal" id="qrModal">
+  <div class="qr-box" role="dialog" aria-modal="true">
+    <button class="qr-close" id="qrClose" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="qr-head">
+      <div class="qr-net" id="qrNet">TRC-20</div>
+      <h4 id="qrName">Tron</h4>
+    </div>
+    <div class="qr-frame">
+      <div id="qrCode"></div>
+    </div>
+    <div class="qr-addr" id="qrAddr"></div>
+    <button class="qr-copy" id="qrCopy">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      <span>Copy Address</span>
+    </button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script>
+  (function () {
+    const toast = document.getElementById('toast');
+    const toastText = document.getElementById('toastText');
+    let toastTimer;
+
+    function showToast(msg) {
+      toastText.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 1900);
+    }
+
+    async function copyText(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        try {
+          await navigator.clipboard.writeText(text);
+          return true;
+        } catch (e) { }
+      }
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.top = '-9999px';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        ta.setSelectionRange(0, ta.value.length);
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        return ok;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    /* ===== Copy buttons ===== */
+    document.querySelectorAll('.copy').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const addr = btn.getAttribute('data-addr');
+        const ok = await copyText(addr);
+
+        if (ok) {
+          btn.classList.add('done');
+          showToast('Address copied to clipboard!');
+          setTimeout(() => btn.classList.remove('done'), 1600);
+        } else {
+          showToast('Copy failed — please copy manually');
+        }
+      });
+    });
+
+    /* ===== QR modal ===== */
+    const qrModal = document.getElementById('qrModal');
+    const qrClose = document.getElementById('qrClose');
+    const qrCodeEl = document.getElementById('qrCode');
+    const qrAddrEl = document.getElementById('qrAddr');
+    const qrNameEl = document.getElementById('qrName');
+    const qrNetEl = document.getElementById('qrNet');
+    const qrCopyBtn = document.getElementById('qrCopy');
+    let currentQrAddr = '';
+    let qrInstance = null;
+
+    function openQr(addr, name, net) {
+      currentQrAddr = addr;
+      qrNameEl.textContent = name;
+      qrNetEl.textContent = net;
+      qrAddrEl.textContent = addr;
+
+      // Clear previous QR
+      qrCodeEl.innerHTML = '';
+
+      // Generate new QR
+      if (typeof QRCode !== 'undefined') {
+        qrInstance = new QRCode(qrCodeEl, {
+          text: addr,
+          width: 200,
+          height: 200,
+          colorDark: '#07080c',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      } else {
+        qrCodeEl.textContent = 'QR library failed to load.';
+      }
+
+      qrModal.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeQr() {
+      qrModal.classList.remove('show');
+      document.body.style.overflow = '';
+      setTimeout(() => { qrCodeEl.innerHTML = ''; }, 300);
+    }
+
+    document.querySelectorAll('.qr-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const addr = btn.getAttribute('data-addr');
+        const name = btn.getAttribute('data-name');
+        const net  = btn.getAttribute('data-net');
+        openQr(addr, name, net);
+      });
+    });
+
+    qrClose.addEventListener('click', closeQr);
+
+    qrModal.addEventListener('click', (e) => {
+      if (e.target === qrModal) closeQr();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && qrModal.classList.contains('show')) closeQr();
+    });
+
+    qrCopyBtn.addEventListener('click', async () => {
+      const ok = await copyText(currentQrAddr);
+      if (ok) {
+        showToast('Address copied to clipboard!');
+      } else {
+        showToast('Copy failed — please copy manually');
+      }
+    });
+  })();
+</script>
+</body>
+</html>
