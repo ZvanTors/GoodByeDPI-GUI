@@ -505,6 +505,83 @@
   .qr-copy:active { transform: translateY(0); }
   .qr-copy svg { width: 14px; height: 14px; }
 
+  /* ===== Stats Panel ===== */
+  .stats-panel {
+    margin-top: 64px;
+    padding: 28px 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    animation: rise 0.8s cubic-bezier(.22,1,.36,1) 0.45s both;
+  }
+
+  .stats-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 22px;
+  }
+  .stats-title svg {
+    width: 15px; height: 15px;
+    color: var(--accent);
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 14px;
+    text-align: center;
+  }
+
+  .stat-item {
+    padding: 16px 10px;
+    border-radius: 14px;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.05);
+    transition: all 0.3s ease;
+  }
+  .stat-item:hover {
+    background: rgba(110, 231, 183, 0.06);
+    border-color: rgba(110, 231, 183, 0.18);
+    transform: translateY(-2px);
+  }
+
+  .stat-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: linear-gradient(180deg, #ffffff 0%, #b8bcc9 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.2;
+    margin-bottom: 4px;
+    min-height: 1.6rem;
+  }
+  .stat-value.loading {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-faint);
+    background: none;
+    -webkit-text-fill-color: var(--text-faint);
+  }
+
+  .stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+
   /* Mobile */
   @media (max-width: 560px) {
     .wrap { padding: 48px 16px 72px; }
@@ -519,6 +596,10 @@
       width: 180px !important;
       height: 180px !important;
     }
+    .stats-panel { padding: 22px 16px; margin-top: 48px; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .stat-value { font-size: 1.35rem; }
+    .stat-item { padding: 14px 8px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -724,6 +805,36 @@
 
   </main>
 
+  <!-- ===== Stats Panel ===== -->
+  <section class="stats-panel" id="statsPanel">
+    <div class="stats-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M6 20V10M18 20V4"/></svg>
+      Live Visitor Stats
+    </div>
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-value loading" data-placeholder="now">—</div>
+        <div class="stat-label">Now Online</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value loading" data-placeholder="24h">—</div>
+        <div class="stat-label">Today</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value loading" data-placeholder="week">—</div>
+        <div class="stat-label">This Week</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value loading" data-placeholder="month">—</div>
+        <div class="stat-label">This Month</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value loading" data-placeholder="user_uniq">—</div>
+        <div class="stat-label">Unique Users</div>
+      </div>
+    </div>
+  </section>
+
   <footer>
     <p>Made with <span class="heart">♥</span> — Thank you for your support</p>
   </footer>
@@ -757,6 +868,10 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+<!-- OpenCounterAPI — Visitor Tracking -->
+<script src="https://api.learntogoogle.de/OpenCounterAPI.js" data-page="goodbyedpi-donate"></script>
+
 <script>
   (function () {
     const toast = document.getElementById('toast');
@@ -828,10 +943,8 @@
       qrNetEl.textContent = net;
       qrAddrEl.textContent = addr;
 
-      // Clear previous QR
       qrCodeEl.innerHTML = '';
 
-      // Generate new QR
       if (typeof QRCode !== 'undefined') {
         qrInstance = new QRCode(qrCodeEl, {
           text: addr,
@@ -882,6 +995,15 @@
         showToast('Copy failed — please copy manually');
       }
     });
+
+    /* ===== Stats panel loading state ===== */
+    // The OpenCounterAPI script automatically replaces [data-placeholder] values.
+    // We just add a fallback in case the API is unreachable after a few seconds.
+    setTimeout(() => {
+      document.querySelectorAll('.stat-value.loading').forEach(el => {
+        el.textContent = '—';
+      });
+    }, 4000);
   })();
 </script>
 </body>
