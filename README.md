@@ -13,18 +13,18 @@
 <p>
 <a href="https://github.com/ZvanTors/GoodByeDPI-GUI/releases"><img src="https://img.shields.io/badge/version-1.3.0-2563EB?style=for-the-badge&logo=github&logoColor=white" alt="Version"></a>
 <a href="https://www.microsoft.com/windows"><img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Platform"></a>
+<a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="License"></a>
 </p>
 
 <p>
-<a href="https://ZvanTors.github.io/GoodByeDPI-GUI/"><img src="https://img.shields.io/badge/🌐%20Landing%20Page-Visit%20Site-89B4FA?style=for-the-badge&logo=githubpages&logoColor=white" alt="Landing Page"></a>
 <a href="https://github.com/ZvanTors/GoodByeDPI-GUI/releases/latest"><img src="https://img.shields.io/badge/%E2%AC%87%20Download-Latest%20Release-FF6B00?style=for-the-badge&logo=github&logoColor=white" alt="Download"></a>
-<a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="License"></a>
-<a href="https://github.com/ZvanTors/GoodByeDPI-GUI/stargazers"><img src="https://img.shields.io/github/stars/ZvanTors/GoodByeDPI-GUI?style=for-the-badge&logo=github&color=yellow" alt="Stars"></a>
-<a href="https://github.com/ZvanTors/GoodByeDPI-GUI/issues"><img src="https://img.shields.io/github/issues/ZvanTors/GoodByeDPI-GUI?style=for-the-badge&logo=github&color=red" alt="Issues"></a>
+<a href="https://ZvanTors.github.io/GoodByeDPI-GUI/"><img src="https://img.shields.io/badge/🌐%20Landing%20Page-Visit%20Site-89B4FA?style=for-the-badge&logo=githubpages&logoColor=white" alt="Landing Page"></a>
 <a href="https://zvantors.github.io/GoodByeDPI-GUI/donate.html"><img src="https://img.shields.io/badge/❤%20Donate-Support%20the%20Project-F38BA8?style=for-the-badge&logo=githubsponsors&logoColor=white" alt="Donate"></a>
 </p>
 
 <p>
+<a href="https://github.com/ZvanTors/GoodByeDPI-GUI/stargazers"><img src="https://img.shields.io/github/stars/ZvanTors/GoodByeDPI-GUI?style=for-the-badge&logo=github&color=yellow" alt="Stars"></a>
+<a href="https://github.com/ZvanTors/GoodByeDPI-GUI/issues"><img src="https://img.shields.io/github/issues/ZvanTors/GoodByeDPI-GUI?style=for-the-badge&logo=github&color=red" alt="Issues"></a>
 <a href="https://github.com/ZvanTors/GoodByeDPI-GUI/wiki"><img src="https://img.shields.io/badge/📚%20Documentation-Wiki-CBA6F7?style=for-the-badge&logo=gitbook&logoColor=white" alt="Wiki"></a>
 <a href="https://github.com/ZvanTors/GoodByeDPI-GUI/discussions"><img src="https://img.shields.io/badge/💬%20Discussions-Join-F9E2AF?style=for-the-badge&logo=github&logoColor=white" alt="Discussions"></a>
 </p>
