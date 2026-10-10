@@ -233,7 +233,8 @@ cd GoodByeDPI-GUI</code></pre>
 │   └── WinDivert64.sys
 │
 ├── docs/                       ← GitHub Pages landing page
-│   └── index.html
+│   ├── index.html
+│   └── donate.html
 │
 └── app/                        ← application package
     ├── constants.py            ← app constants &amp; mode presets
@@ -247,7 +248,8 @@ cd GoodByeDPI-GUI</code></pre>
     │
     └── ui/                     ← presentation layer
         ├── main_window.py      ← main window (signals only)
-        ├── dialogs.py          ← UpdateDialog / AboutDialog / Args Guide
+        ├── dialogs.py          ← UpdateDialog / AboutDialog /
+        │                          DonateDialog / Args Guide
         ├── widgets.py          ← StatusDot, StatusPill, UptimeChip,
         │                          ModeCard, ModeCardGroup,
         │                          Toast, ToastManager
@@ -388,43 +390,19 @@ Every contribution — no matter how small — keeps the project alive and impro
 
 <br>
 
-<table align="center">
-  <thead>
-    <tr>
-      <th align="center">Network</th>
-      <th align="center">Asset</th>
-      <th align="left">Wallet Address</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td align="center"><img src="https://img.shields.io/badge/TRON-TRX-E50915?style=for-the-badge&logo=tron&logoColor=white" alt="TRON"></td>
-      <td align="center"><strong>TRX</strong></td>
-      <td><code>TWukNBmxLUbPVgayRsZ72u84K8yW7K9cQw</code></td>
-    </tr>
-    <tr>
-      <td align="center"><img src="https://img.shields.io/badge/USDT-TRC20-26A17B?style=for-the-badge&logo=tether&logoColor=white" alt="USDT TRC20"></td>
-      <td align="center"><strong>USDT</strong></td>
-      <td><code>TWukNBmxLUbPVgayRsZ72u84K8yW7K9cQw</code></td>
-    </tr>
-  </tbody>
-</table>
-
-<br>
-
-<blockquote>
-<p align="center">
-⚠️ <strong>Important:</strong> Only send <strong>TRX</strong> or <strong>USDT (TRC20)</strong> to this address.<br>
-Sending any other asset or using a different network (ERC20, BEP20, etc.) will result in <strong>permanent loss of funds</strong>.
-</p>
-</blockquote>
-
 <div align="center">
 
 <p>
-<a href="https://tronscan.org/#/address/TWukNBmxLUbPVgayRsZ72u84K8yW7K9cQw">
-<img src="https://img.shields.io/badge/View%20on-Tronscan-1F2937?style=for-the-badge&logo=blockchaindotcom&logoColor=white" alt="View on Tronscan">
+<a href="https://zvantors.github.io/GoodByeDPI-GUI/donate.html">
+<img src="https://img.shields.io/badge/❤%20Donate-Support%20the%20Project-F38BA8?style=for-the-badge&logo=githubsponsors&logoColor=white" alt="Donate">
 </a>
+</p>
+
+<br>
+
+<p>
+Click the button above to view all supported networks<br>
+<strong>TRX</strong> · <strong>USDT (TRC-20 / ERC-20)</strong> · <strong>BTC</strong> · <strong>ETH</strong> · <strong>BNB</strong>
 </p>
 
 <br>
