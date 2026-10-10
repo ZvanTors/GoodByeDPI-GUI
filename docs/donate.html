@@ -78,8 +78,8 @@
       linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px),
       linear-gradient(90deg, rgba(255,255,255,0.022) 1px, transparent 1px);
     background-size: 56px 56px;
-    mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, #000 30%, transparent 75%);
     -webkit-mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, #000 30%, transparent 75%);
+            mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, #000 30%, transparent 75%);
     pointer-events: none;
     z-index: 0;
   }
@@ -177,8 +177,9 @@
     padding: 1px;
     background: linear-gradient(135deg, rgba(255,255,255,0.14), transparent 45%);
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
-    mask-composite: exclude;
+            mask-composite: exclude;
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.35s ease;
@@ -996,12 +997,12 @@
       }
     });
 
-    /* ===== Stats panel loading state ===== */
-    // The OpenCounterAPI script automatically replaces [data-placeholder] values.
-    // We just add a fallback in case the API is unreachable after a few seconds.
+    /* ===== Stats panel fallback ===== */
     setTimeout(() => {
       document.querySelectorAll('.stat-value.loading').forEach(el => {
-        el.textContent = '—';
+        if (el.textContent.trim() === '—') {
+          el.textContent = '—';
+        }
       });
     }, 4000);
   })();
