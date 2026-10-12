@@ -87,20 +87,20 @@ If your ISP blocks websites using <strong>Deep Packet Inspection (DPI)</strong>,
   <tbody>
     <tr><td>🖥 <strong>Fully Graphical</strong></td><td>No terminal, no scripts — a clean PySide6 GUI</td></tr>
     <tr><td>⚡ <strong>One-Click Start / Stop</strong></td><td>Activate or deactivate DPI circumvention instantly, with smooth button animations</td></tr>
-    <tr><td>🎛 <strong>Mode Cards</strong></td><td>Pick <em>Fast</em> (recommended), <em>Compatible</em>, or <em>Custom</em> from visual cards with badges instead of a dropdown</td></tr>
+    <tr><td>🎛 <strong>Mode Cards</strong></td><td>Pick <em>Fast</em> (recommended), <em>Compatible</em>, or <em>Custom</em> from visual cards with badges instead of a dropdown. Cards stay locked while a session is running — change the mode after stopping.</td></tr>
     <tr><td>🔧 <strong>Custom Arguments</strong></td><td>Advanced users can pass any GoodbyeDPI flags</td></tr>
     <tr><td>📖 <strong>Arguments Guide</strong></td><td>Built-in tabbed reference of every GoodbyeDPI flag with a one-click "add" button</td></tr>
     <tr><td>ℹ️ <strong>About Dialog</strong></td><td>Click the version badge to see the app version, Powered-by libraries, and credits</td></tr>
     <tr><td>✅ <strong>Live Args Validator</strong></td><td>Real-time feedback on custom arguments — catches typos, missing values, and conflicting flags before you start</td></tr>
-    <tr><td>🍞 <strong>In-App Toast Notifications</strong></td><td>Friendly, dismissible notifications for actions like copying logs and toggling auto-start</td></tr>
+    <tr><td>🍞 <strong>In-App Toast Notifications</strong></td><td>Friendly, dismissible notifications for actions like copying logs and toggling auto-start. Each toast has an explicit <strong>×</strong> close button, and the stack is capped at 3 to avoid clutter.</td></tr>
     <tr><td>🎞 <strong>Smooth Window Resize</strong></td><td>Window height animates gracefully when switching to Custom mode</td></tr>
-    <tr><td>🚀 <strong>Auto-Start with Windows</strong></td><td>Optional Task Scheduler integration</td></tr>
+    <tr><td>🚀 <strong>Auto-Start with Windows</strong></td><td>Optional Task Scheduler integration (with a wait cursor while Windows updates the task)</td></tr>
     <tr><td>📋 <strong>Color-Coded Live Log</strong></td><td>Errors in red, warnings in yellow, and separators in blue — capped at 2000 lines to keep memory flat</td></tr>
     <tr><td>📦 <strong>Single Portable EXE</strong></td><td>Everything bundled — no installation, no dependencies</td></tr>
-    <tr><td>🌐 <strong>Auto Update Checker</strong></td><td>Notifies you when a new version is available with a direct download link</td></tr>
+    <tr><td>🌐 <strong>Auto Update Checker</strong></td><td>Notifies you when a new version is available — with a busy indicator on the button while the check runs and a direct download link</td></tr>
     <tr><td>🛡 <strong>Zero Impact</strong></td><td>Doesn't affect games, streaming, or general traffic</td></tr>
     <tr><td>🔔 <strong>System Tray Support</strong></td><td>Runs quietly in the background with Start / Stop / Exit controls</td></tr>
-    <tr><td>⏱ <strong>Uptime Counter</strong></td><td>Live session timer while GoodbyeDPI is running</td></tr>
+    <tr><td>⏱ <strong>Uptime Counter</strong></td><td>Live session timer with a smooth fade-in animation when the session starts</td></tr>
     <tr><td>🎨 <strong>Modern Dark UI</strong></td><td>Catppuccin-inspired theme with background gradient, rounded cards, floating pill titles, and a native dark title bar</td></tr>
     <tr><td>💾 <strong>Persistent Settings</strong></td><td>Window position, mode, and custom arguments remembered between sessions</td></tr>
     <tr><td>📝 <strong>Runtime Logs</strong></td><td>Structured logs written to <code>%APPDATA%\GoodbyeDPIManager\logs\</code> for post-crash diagnostics</td></tr>
@@ -148,6 +148,10 @@ Double-click the EXE. Windows will request <strong>administrator privileges</str
 
 <blockquote>
 <p><strong>Tip — Custom arguments:</strong> Click the <strong>?</strong> button next to the Custom arguments field to open the built-in <em>Arguments Guide</em> — 5 tabbed categories, live search, and a one-click <strong>+</strong> to add flags. In the <em>Presets</em> tab, <strong>+</strong> replaces the whole line; in all other tabs it appends. The field also validates your input live (<span style="color:#a6e3a1;">✓</span> / <span style="color:#f9e2af;">⚠</span> / <span style="color:#f38ba8;">✕</span>) and warns you about typos or conflicting options.</p>
+</blockquote>
+
+<blockquote>
+<p><strong>Tip — Changing modes:</strong> The Mode Cards are <strong>locked while a session is running</strong>. To switch to a different preset, click <strong>⏹ Stop</strong> first, then pick the new card and start again. This prevents mid-session confusion, since changing the mode has no effect until the next Start anyway.</p>
 </blockquote>
 
 <blockquote>
@@ -226,6 +230,10 @@ cd GoodByeDPI-GUI</code></pre>
 </blockquote>
 
 <p><strong>6. Find your EXE</strong> in the <code>dist/</code> folder and rename <code>GoodByeDPI GUI.exe</code> to <code>GoodByeDPI.GUI.exe</code> (or just use <code>build.bat</code>, which does this automatically).</p>
+
+<blockquote>
+<p>💡 <strong>Optional:</strong> install <a href="https://upx.github.io/">UPX</a> and place <code>upx.exe</code> next to <code>pyinstaller.exe</code> to shave ~10% off the final EXE size. PyInstaller will use it automatically.</p>
+</blockquote>
 
 ---
 
@@ -311,6 +319,11 @@ cd GoodByeDPI-GUI</code></pre>
 </details>
 
 <details>
+<summary><strong>❌ Mode Cards don't respond to clicks</strong></summary>
+<p>The Mode Cards are intentionally <strong>locked while a session is running</strong> — changing the mode has no effect until the next Start. Click <strong>⏹ Stop</strong> first, then pick a new card.</p>
+</details>
+
+<details>
 <summary><strong>❌ Auto-start isn't working</strong></summary>
 <ol>
   <li>Open <strong>Task Scheduler</strong> (<code>taskschd.msc</code>).</li>
@@ -322,7 +335,7 @@ cd GoodByeDPI-GUI</code></pre>
 
 <details>
 <summary><strong>❌ Update dialog doesn't appear</strong></summary>
-<p>The update check runs silently in the background. If no popup appears, you're either up to date or offline. A toast notification will confirm either way when you click <strong>🔄 Check for updates</strong> in the bottom-left of the window.</p>
+<p>The update check runs silently in the background. While it runs, the <strong>🔄 Check for updates</strong> button shows a busy state (<em>🔄 Checking…</em>) and is temporarily disabled. Once it finishes, a toast notification will confirm either way — a new version is available, you're up to date, or the check failed (offline).</p>
 </details>
 
 <details>
