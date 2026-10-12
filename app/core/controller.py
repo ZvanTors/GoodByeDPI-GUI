@@ -13,8 +13,7 @@ from app.constants import (
     MODE_PRESETS,
     CUSTOM_MODE_INDEX,
     TASK_NAME,
-    WALLET_ADDRESS,
-    TRONSCAN_URL,
+    DONATION_WALLETS,
     download_url,
 )
 from app.ui.dialogs import (
@@ -67,7 +66,9 @@ class AppController(QObject):
         self.window.custom_args_changed.connect(self.on_custom_args_changed)
         self.window.autostart_toggled.connect(self.on_autostart_toggled)
         self.window.close_choice.connect(self.on_close_choice)
-        self.window.close_preference_changed.connect(self.on_close_preference_changed)
+        self.window.close_preference_changed.connect(
+            self.on_close_preference_changed
+        )
         self.window.check_update_clicked.connect(self.check_for_updates_manual)
         self.window.donate_clicked.connect(self.show_donate)
         self.window.clear_log_clicked.connect(self.window.clear_log)
@@ -441,6 +442,8 @@ class AppController(QObject):
             self.window.show_toast("Could not copy log", "error")
 
     # ------------------------------------------------------------------
+    # About
+    # ------------------------------------------------------------------
     @Slot()
     def show_about(self) -> None:
         try:
@@ -448,10 +451,13 @@ class AppController(QObject):
         except Exception as exc:
             log.exception("AboutDialog failed: %s", exc)
 
+    # ------------------------------------------------------------------
+    # Donate
+    # ------------------------------------------------------------------
     @Slot()
     def show_donate(self) -> None:
         try:
-            DonateDialog(self.window, WALLET_ADDRESS, TRONSCAN_URL).exec()
+            DonateDialog(self.window, DONATION_WALLETS).exec()
         except Exception as exc:
             log.exception("DonateDialog failed: %s", exc)
 

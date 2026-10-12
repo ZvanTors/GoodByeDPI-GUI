@@ -30,9 +30,57 @@ GOODBYEDPI_URL = "https://github.com/ValdikSS/GoodbyeDPI"
 PYSIDE_URL = "https://pypi.org/project/PySide6/"
 WINDIVERT_URL = "https://www.reqrypt.org/windivert.html"
 
+# ---------------------------------------------------------------------
 # Donation
-WALLET_ADDRESS = "TWukNBmxLUbPVgayRsZ72u84K8yW7K9cQw"
-TRONSCAN_URL = f"https://tronscan.org/#/address/{WALLET_ADDRESS}"
+#
+# Mirrors docs/donate.html — every entry shown in the dialog corresponds
+# to a card on the landing page. Keep the two lists in sync whenever
+# a new wallet is added.
+#
+# Each entry:
+#   symbol   – short ticker shown in the dialog ("TRX", "USDT", …)
+#   network  – blockchain / token standard ("TRC-20", "BEP-20", …)
+#   address  – receive address
+#   color    – brand color for the accent dot
+# ---------------------------------------------------------------------
+DONATION_WALLETS: List[dict] = [
+    {
+        "symbol":  "TRX",
+        "network": "TRC-20",
+        "address": "TWukNBmxLUbPVgayRsZ72u84K8yW7K9cQw",
+        "color":   "#FF060A",
+    },
+    {
+        "symbol":  "USDT",
+        "network": "TRC-20",
+        "address": "TWukNBmxLUbPVgayRsZ72u84K8yW7K9cQw",
+        "color":   "#26A17B",
+    },
+    {
+        "symbol":  "USDT",
+        "network": "BEP-20",
+        "address": "0x53f03070E2b6157fCaF48688b3426fA131c8175B",
+        "color":   "#26A17B",
+    },
+    {
+        "symbol":  "BTC",
+        "network": "Native SegWit",
+        "address": "bc1qt97afeun93602wuk34duj4rpxag8dt5nws4p4z",
+        "color":   "#F7931A",
+    },
+    {
+        "symbol":  "ETH",
+        "network": "ERC-20",
+        "address": "0x53f03070E2b6157fCaF48688b3426fA131c8175B",
+        "color":   "#627EEA",
+    },
+    {
+        "symbol":  "BNB",
+        "network": "BEP-20",
+        "address": "0x53f03070E2b6157fCaF48688b3426fA131c8175B",
+        "color":   "#F0B90B",
+    },
+]
 
 # ---------------------------------------------------------------------
 # Bundled resource paths (relative — resolved via utils.resource_path)

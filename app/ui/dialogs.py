@@ -1,6 +1,5 @@
 """Custom dialogs used by the application."""
 import logging
-import os
 
 from PySide6.QtCore import Qt, QUrl, QTimer
 from PySide6.QtGui import QDesktopServices
@@ -17,8 +16,8 @@ from app.constants import (
     GOODBYEDPI_URL,
     PYSIDE_URL,
     WINDIVERT_URL,
+    DONATION_WALLETS,
 )
-from app.core.logging_setup import get_log_file_path
 
 log = logging.getLogger(__name__)
 
@@ -263,14 +262,14 @@ class UpdateDialog(QDialog):
 
 
 # ----------------------------------------------------------------
-# About dialog
+# About dialog (reverted — no Log Folder button)
 # ----------------------------------------------------------------
 class AboutDialog(QDialog):
     def __init__(self, parent, version: str):
         super().__init__(parent)
         self.setWindowTitle("About GoodByeDPI GUI")
         self.setModal(True)
-        self.setFixedWidth(500)
+        self.setFixedWidth(480)
         self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
 
         self.setStyleSheet("""
@@ -317,20 +316,6 @@ class AboutDialog(QDialog):
             }
             QPushButton#aboutGithubBtn:hover   { background-color: #45475a; border-color: #585b70; }
             QPushButton#aboutGithubBtn:pressed { background-color: #585b70; }
-            QPushButton#aboutLogBtn {
-                background-color: rgba(137, 180, 250, 0.10);
-                border: 1px solid rgba(137, 180, 250, 0.30);
-                border-radius: 9px; padding: 10px 20px;
-                color: #89b4fa; font-weight: 600; min-width: 120px;
-            }
-            QPushButton#aboutLogBtn:hover {
-                background-color: rgba(137, 180, 250, 0.20);
-                border-color: rgba(137, 180, 250, 0.55);
-                color: #a5c8ff;
-            }
-            QPushButton#aboutLogBtn:pressed {
-                background-color: rgba(137, 180, 250, 0.32);
-            }
             QPushButton#aboutCloseBtn {
                 background-color: #89b4fa; border: none; border-radius: 9px;
                 padding: 10px 22px; color: #11111b;
@@ -440,12 +425,6 @@ class AboutDialog(QDialog):
         row = QHBoxLayout()
         row.setSpacing(10)
 
-        log_btn = QPushButton("📁  Log Folder")
-        log_btn.setObjectName("aboutLogBtn")
-        log_btn.setCursor(Qt.PointingHandCursor)
-        log_btn.setToolTip("Open the folder containing runtime logs")
-        log_btn.clicked.connect(self._open_log_folder)
-
         github_btn = QPushButton("⭐  GitHub")
         github_btn.setObjectName("aboutGithubBtn")
         github_btn.setCursor(Qt.PointingHandCursor)
@@ -456,7 +435,6 @@ class AboutDialog(QDialog):
         close_btn.setDefault(True)
         close_btn.clicked.connect(self.accept)
 
-        row.addWidget(log_btn)
         row.addWidget(github_btn)
         row.addStretch()
         row.addWidget(close_btn)
@@ -467,19 +445,6 @@ class AboutDialog(QDialog):
             QDesktopServices.openUrl(QUrl(GITHUB_URL))
         except Exception as exc:
             log.warning("Failed to open GitHub URL: %s", exc)
-
-    def _open_log_folder(self) -> None:
-        """Open the log directory in the system file browser.
-
-        We deliberately open the *folder*, not the file, because the user
-        may want to attach the log to a bug report or zip it.
-        """
-        try:
-            folder = os.path.dirname(get_log_file_path())
-            os.makedirs(folder, exist_ok=True)
-            QDesktopServices.openUrl(QUrl.fromLocalFile(folder))
-        except Exception as exc:
-            log.warning("Failed to open log folder: %s", exc)
 
 
 # ----------------------------------------------------------------
@@ -825,24 +790,140 @@ class CustomArgsHelpDialog(QDialog):
         return self._preview.text().strip()
 
 
-# ----------------------------------------------------------------
-# Donation dialog
-# ----------------------------------------------------------------
-class DonateDialog(QDialog):
-    """A friendly dialog showing the donation wallet addresses."""
+# =================================================================
+# Donation dialog — one row per wallet (mirrors docs/donate.html)
+# =================================================================
+class _WalletRow(QFrame):
+    """A single compact wallet row: dot + symbol + network + address + Copy."""
 
-    def __init__(self, parent, wallet: str, tronscan_url: str):
+    def __init__(
+        self,
+        symbol: str,
+        network: str,
+        address: str,
+        color: str,
+        parent=None,
+    ):
+        super().__init__(parent)
+        self.setObjectName("walletRow")
+        self.setAttribute(Qt.WA_StyledBackground, True)
+        self._address = address
+        self._reset_timer: QTimer | None = None
+
+        self.setStyleSheet(f"""
+            QFrame#walletRow {{
+                background-color: #1e1e2e;
+                border: 1px solid #313244;
+                border-radius: 10px;
+            }}
+            QFrame#walletRow:hover {{
+                background-color: #252537;
+                border-color: #45475a;
+            }}
+            QLabel#walletSymbol {{
+                color: #f5f5f5;
+                font-size: 10pt;
+                font-weight: 700;
+                background: transparent;
+            }}
+            QLabel#walletNetwork {{
+                color: #6c7086;
+                font-size: 8.5pt;
+                font-weight: 600;
+                background: transparent;
+            }}
+            QLabel#walletAddr {{
+                color: #a6adc8;
+                font-family: 'Cascadia Code', 'JetBrains Mono', 'Consolas', monospace;
+                font-size: 8.5pt;
+                background: transparent;
+            }}
+        """)
+
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(14, 9, 12, 9)
+        outer.setSpacing(3)
+
+        # --- Top line: dot + symbol + network + spacer + copy ---
+        top = QHBoxLayout()
+        top.setSpacing(8)
+
+        dot = QLabel()
+        dot.setFixedSize(10, 10)
+        dot.setStyleSheet(
+            f"background-color: {color}; border-radius: 5px;"
+        )
+
+        symbol_lbl = QLabel(symbol)
+        symbol_lbl.setObjectName("walletSymbol")
+
+        network_lbl = QLabel(network)
+        network_lbl.setObjectName("walletNetwork")
+
+        self._copy_btn = QPushButton("Copy")
+        self._copy_btn.setObjectName("copyBtn")
+        self._copy_btn.setCursor(Qt.PointingHandCursor)
+        self._copy_btn.clicked.connect(self._copy_address)
+
+        top.addWidget(dot)
+        top.addWidget(symbol_lbl)
+        top.addWidget(network_lbl)
+        top.addStretch()
+        top.addWidget(self._copy_btn)
+        outer.addLayout(top)
+
+        # --- Bottom line: monospace address ---
+        addr_lbl = QLabel(address)
+        addr_lbl.setObjectName("walletAddr")
+        addr_lbl.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        addr_lbl.setCursor(Qt.IBeamCursor)
+        outer.addWidget(addr_lbl)
+
+    def _copy_address(self) -> None:
+        try:
+            QApplication.clipboard().setText(self._address)
+        except Exception as exc:
+            log.warning("clipboard write failed: %s", exc)
+            return
+
+        self._copy_btn.setText("✓  Copied")
+
+        # Lazy-create the reset timer, owned by the row so it is destroyed
+        # along with its parent widget — no dangling timer callbacks.
+        if self._reset_timer is None:
+            self._reset_timer = QTimer(self)
+            self._reset_timer.setSingleShot(True)
+            self._reset_timer.timeout.connect(self._reset_copy_btn)
+        self._reset_timer.start(1500)
+
+    def _reset_copy_btn(self) -> None:
+        try:
+            self._copy_btn.setText("Copy")
+        except RuntimeError:
+            pass
+
+    def stop_timer(self) -> None:
+        """Called by the parent dialog before teardown."""
+        if self._reset_timer is not None:
+            self._reset_timer.stop()
+
+
+class DonateDialog(QDialog):
+    """Donation dialog listing every supported network / asset.
+
+    The list is driven by ``constants.DONATION_WALLETS`` so it always
+    matches ``docs/donate.html``.
+    """
+
+    def __init__(self, parent, wallets: list[dict]):
         super().__init__(parent)
         self.setWindowTitle("Support GoodByeDPI GUI")
         self.setModal(True)
-        self.setFixedWidth(520)
+        self.setFixedWidth(560)
         self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
 
-        self._wallet = wallet
-        self._tronscan_url = tronscan_url
-
-        # B1 fix: own the reset timer so we can stop it cleanly on close.
-        self._copy_reset_timer: QTimer | None = None
+        self._wallets = wallets
+        self._rows: list[_WalletRow] = []
 
         self.setStyleSheet("""
             QDialog { background-color: #11111b; }
@@ -856,35 +937,12 @@ class DonateDialog(QDialog):
                 color: #a6adc8; font-size: 9.5pt;
             }
 
-            QFrame#assetChip {
-                background-color: #1e1e2e;
-                border: 1px solid #313244;
-                border-radius: 10px;
-            }
-            QLabel#assetName {
-                color: #cdd6f4; font-size: 10pt; font-weight: 700;
-            }
-            QLabel#assetTag {
-                color: #6c7086; font-size: 8.5pt; font-weight: 600;
-                letter-spacing: 0.5px;
-            }
-
-            QFrame#walletBox {
-                background-color: #0d0d15;
-                border: 1px solid #262637;
-                border-radius: 12px;
-            }
-            QLabel#walletLabel {
+            QLabel#sectionLabel {
                 color: #6c7086; font-size: 8.5pt;
-                font-weight: 700; letter-spacing: 1.0px;
-            }
-            QLabel#walletValue {
-                color: #a6e3a1;
-                font-family: 'Cascadia Code', 'JetBrains Mono', 'Consolas', monospace;
-                font-size: 10.5pt; font-weight: 700;
-                letter-spacing: 0.5px;
+                font-weight: 700; letter-spacing: 1.2px;
             }
 
+            /* Warning box */
             QFrame#warningBox {
                 background-color: rgba(249, 226, 175, 0.08);
                 border: 1px solid rgba(249, 226, 175, 0.30);
@@ -897,14 +955,16 @@ class DonateDialog(QDialog):
                 color: #f9e2af; font-size: 11pt; font-weight: 800;
             }
 
+            /* Copy button (shared by every wallet row) */
             QPushButton#copyBtn {
                 background-color: rgba(166, 227, 161, 0.10);
                 color: #a6e3a1;
                 border: 1px solid rgba(166, 227, 161, 0.30);
                 border-radius: 8px;
-                padding: 8px 16px;
+                padding: 5px 14px;
                 font-weight: 700; font-size: 9pt;
-                min-width: 80px; min-height: 0;
+                min-width: 74px; max-width: 74px;
+                min-height: 0;  max-height: 28px;
             }
             QPushButton#copyBtn:hover {
                 background-color: rgba(166, 227, 161, 0.20);
@@ -913,17 +973,6 @@ class DonateDialog(QDialog):
             QPushButton#copyBtn:pressed {
                 background-color: rgba(166, 227, 161, 0.32);
             }
-
-            QPushButton#tronscanBtn {
-                background-color: #313244;
-                border: 1px solid #45475a;
-                border-radius: 9px;
-                padding: 10px 20px;
-                color: #cdd6f4;
-                font-weight: 600; min-width: 140px;
-            }
-            QPushButton#tronscanBtn:hover   { background-color: #45475a; border-color: #585b70; }
-            QPushButton#tronscanBtn:pressed { background-color: #585b70; }
 
             QPushButton#donateCloseBtn {
                 background-color: #89b4fa;
@@ -937,12 +986,12 @@ class DonateDialog(QDialog):
         """)
 
         root = QVBoxLayout(self)
-        root.setContentsMargins(28, 26, 28, 24)
-        root.setSpacing(16)
+        root.setContentsMargins(26, 24, 26, 22)
+        root.setSpacing(14)
 
         root.addLayout(self._build_header())
-        root.addLayout(self._build_asset_row())
-        root.addWidget(self._build_wallet_box())
+        root.addWidget(self._build_section_label())
+        root.addWidget(self._build_wallets_list())
         root.addWidget(self._build_warning())
         root.addLayout(self._build_footer())
 
@@ -952,7 +1001,9 @@ class DonateDialog(QDialog):
         row.setSpacing(14)
 
         icon = QLabel("❤")
-        icon.setStyleSheet("font-size: 34pt; color: #f38ba8; background: transparent;")
+        icon.setStyleSheet(
+            "font-size: 34pt; color: #f38ba8; background: transparent;"
+        )
         icon.setFixedWidth(52)
         icon.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
         row.addWidget(icon)
@@ -968,7 +1019,7 @@ class DonateDialog(QDialog):
             "If it helped you browse freely, consider a small donation."
         )
         subtitle.setObjectName("donateSubtitle")
-        subtitle.setTextFormat(Qt.RichText)
+        subtitle.setFormat(Qt.RichText)
         subtitle.setWordWrap(True)
 
         text_col.addWidget(title)
@@ -977,98 +1028,34 @@ class DonateDialog(QDialog):
         return row
 
     # ----------------------------------------------------------------
-    def _build_asset_row(self) -> QHBoxLayout:
-        row = QHBoxLayout()
-        row.setSpacing(10)
-        row.addWidget(self._build_asset_chip("TRX", "TRON Network"))
-        row.addWidget(self._build_asset_chip("USDT", "TRC20 · Tether"))
-        return row
-
-    def _build_asset_chip(self, name: str, tag: str) -> QFrame:
-        chip = QFrame()
-        chip.setObjectName("assetChip")
-        chip.setAttribute(Qt.WA_StyledBackground, True)
-
-        layout = QVBoxLayout(chip)
-        layout.setContentsMargins(14, 10, 14, 10)
-        layout.setSpacing(2)
-
-        name_lbl = QLabel(name)
-        name_lbl.setObjectName("assetName")
-        tag_lbl = QLabel(tag)
-        tag_lbl.setObjectName("assetTag")
-
-        layout.addWidget(name_lbl)
-        layout.addWidget(tag_lbl)
-        return chip
+    def _build_section_label(self) -> QLabel:
+        lbl = QLabel("SUPPORTED NETWORKS")
+        lbl.setObjectName("sectionLabel")
+        return lbl
 
     # ----------------------------------------------------------------
-    def _build_wallet_box(self) -> QFrame:
-        frame = QFrame()
-        frame.setObjectName("walletBox")
-        frame.setAttribute(Qt.WA_StyledBackground, True)
-
-        layout = QVBoxLayout(frame)
-        layout.setContentsMargins(18, 14, 14, 14)
+    def _build_wallets_list(self) -> QWidget:
+        container = QWidget()
+        container.setStyleSheet("background: transparent;")
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(8)
 
-        label = QLabel("WALLET ADDRESS")
-        label.setObjectName("walletLabel")
-        layout.addWidget(label)
-
-        row = QHBoxLayout()
-        row.setSpacing(10)
-
-        addr = QLabel(self._wallet)
-        addr.setObjectName("walletValue")
-        addr.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        addr.setCursor(Qt.IBeamCursor)
-
-        self._copy_btn = QPushButton("Copy")
-        self._copy_btn.setObjectName("copyBtn")
-        self._copy_btn.setCursor(Qt.PointingHandCursor)
-        self._copy_btn.clicked.connect(self._copy_address)
-
-        row.addWidget(addr, 1)
-        row.addWidget(self._copy_btn, 0)
-        layout.addLayout(row)
-
-        return frame
-
-    def _copy_address(self) -> None:
-        """Copy the wallet and flash the button label.
-
-        B1 fix: the previous implementation used ``QTimer.singleShot`` with
-        a lambda that captured ``self``. If the dialog was closed within
-        1.5 s the C++ object had already been destroyed → RuntimeError.
-        We now own the timer and stop it on close.
-        """
-        try:
-            QApplication.clipboard().setText(self._wallet)
-        except Exception as exc:
-            log.warning("clipboard write failed: %s", exc)
-            return
-
-        self._copy_btn.setText("✓  Copied")
-
-        if self._copy_reset_timer is None:
-            self._copy_reset_timer = QTimer(self)
-            self._copy_reset_timer.setSingleShot(True)
-            self._copy_reset_timer.timeout.connect(self._reset_copy_btn)
-        self._copy_reset_timer.start(1500)
-
-    def _reset_copy_btn(self) -> None:
-        try:
-            self._copy_btn.setText("Copy")
-        except RuntimeError:
-            # C++ object already gone — ignore silently.
-            pass
-
-    def done(self, result: int) -> None:
-        """Stop the reset timer before the dialog is torn down."""
-        if self._copy_reset_timer is not None:
-            self._copy_reset_timer.stop()
-        super().done(result)
+        for w in self._wallets:
+            try:
+                row = _WalletRow(
+                    symbol=w["symbol"],
+                    network=w["network"],
+                    address=w["address"],
+                    color=w["color"],
+                )
+            except (KeyError, TypeError) as exc:
+                # Skip malformed entries rather than crash the dialog.
+                log.warning("Skipping malformed wallet entry: %s (%s)", w, exc)
+                continue
+            self._rows.append(row)
+            layout.addWidget(row)
+        return container
 
     # ----------------------------------------------------------------
     def _build_warning(self) -> QFrame:
@@ -1086,12 +1073,13 @@ class DonateDialog(QDialog):
         icon.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
 
         text = QLabel(
-            "Only send <b>TRX</b> or <b>USDT (TRC20)</b> to this address.<br>"
-            "Other assets or networks (ERC20, BEP20, …) will result in "
+            "Always match the asset to its correct network.<br>"
+            "Sending the wrong asset (e.g. BTC to an ETH address, or "
+            "using an incompatible chain) will result in "
             "<b>permanent loss of funds</b>."
         )
         text.setObjectName("warningText")
-        text.setTextFormat(Qt.RichText)
+        text.setFormat(Qt.RichText)
         text.setWordWrap(True)
 
         layout.addWidget(icon, 0, Qt.AlignTop)
@@ -1102,24 +1090,19 @@ class DonateDialog(QDialog):
     def _build_footer(self) -> QHBoxLayout:
         row = QHBoxLayout()
         row.setSpacing(10)
-
-        tronscan_btn = QPushButton("🔗  View on Tronscan")
-        tronscan_btn.setObjectName("tronscanBtn")
-        tronscan_btn.setCursor(Qt.PointingHandCursor)
-        tronscan_btn.clicked.connect(self._open_tronscan)
+        row.addStretch()
 
         close_btn = QPushButton("Close")
         close_btn.setObjectName("donateCloseBtn")
         close_btn.setDefault(True)
         close_btn.clicked.connect(self.accept)
 
-        row.addWidget(tronscan_btn)
-        row.addStretch()
         row.addWidget(close_btn)
         return row
 
-    def _open_tronscan(self) -> None:
-        try:
-            QDesktopServices.openUrl(QUrl(self._tronscan_url))
-        except Exception as exc:
-            log.warning("Failed to open Tronscan URL: %s", exc)
+    # ----------------------------------------------------------------
+    def done(self, result: int) -> None:
+        """Stop all per-row reset timers before teardown."""
+        for row in self._rows:
+            row.stop_timer()
+        super().done(result)
