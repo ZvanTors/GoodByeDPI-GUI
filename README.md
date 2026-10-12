@@ -90,7 +90,7 @@ If your ISP blocks websites using <strong>Deep Packet Inspection (DPI)</strong>,
     <tr><td>🎛 <strong>Mode Cards</strong></td><td>Pick <em>Fast</em> (recommended), <em>Compatible</em>, or <em>Custom</em> from visual cards with badges instead of a dropdown</td></tr>
     <tr><td>🔧 <strong>Custom Arguments</strong></td><td>Advanced users can pass any GoodbyeDPI flags</td></tr>
     <tr><td>📖 <strong>Arguments Guide</strong></td><td>Built-in tabbed reference of every GoodbyeDPI flag with a one-click "add" button</td></tr>
-    <tr><td>ℹ️ <strong>About Dialog</strong></td><td>Click the version badge to see the app version, Powered-by libraries, and a shortcut to the log folder</td></tr>
+    <tr><td>ℹ️ <strong>About Dialog</strong></td><td>Click the version badge to see the app version, Powered-by libraries, and credits</td></tr>
     <tr><td>✅ <strong>Live Args Validator</strong></td><td>Real-time feedback on custom arguments — catches typos, missing values, and conflicting flags before you start</td></tr>
     <tr><td>🍞 <strong>In-App Toast Notifications</strong></td><td>Friendly, dismissible notifications for actions like copying logs and toggling auto-start</td></tr>
     <tr><td>🎞 <strong>Smooth Window Resize</strong></td><td>Window height animates gracefully when switching to Custom mode</td></tr>
@@ -102,7 +102,7 @@ If your ISP blocks websites using <strong>Deep Packet Inspection (DPI)</strong>,
     <tr><td>🔔 <strong>System Tray Support</strong></td><td>Runs quietly in the background with Start / Stop / Exit controls</td></tr>
     <tr><td>⏱ <strong>Uptime Counter</strong></td><td>Live session timer while GoodbyeDPI is running</td></tr>
     <tr><td>🎨 <strong>Modern Dark UI</strong></td><td>Catppuccin-inspired theme with background gradient, rounded cards, floating pill titles, and a native dark title bar</td></tr>
-    <tr><td>💾 <strong>Persistent Settings</strong></td><td>Window position, mode, custom arguments, and close-behaviour remembered between sessions</td></tr>
+    <tr><td>💾 <strong>Persistent Settings</strong></td><td>Window position, mode, and custom arguments remembered between sessions</td></tr>
     <tr><td>📝 <strong>Runtime Logs</strong></td><td>Structured logs written to <code>%APPDATA%\GoodbyeDPIManager\logs\</code> for post-crash diagnostics</td></tr>
   </tbody>
 </table>
@@ -155,11 +155,11 @@ Double-click the EXE. Windows will request <strong>administrator privileges</str
 </blockquote>
 
 <blockquote>
-<p><strong>Tray:</strong> Closing the window asks whether to exit or minimize to the system tray. Tick <em>Remember my choice</em> to skip the prompt next time. From the tray you can Start, Stop, or Exit at any time.</p>
+<p><strong>Tray:</strong> Closing the window always asks whether to exit or minimize to the system tray. From the tray you can Start, Stop, or Exit at any time.</p>
 </blockquote>
 
 <blockquote>
-<p><strong>Logs:</strong> Runtime logs are stored at <code>%APPDATA%\GoodbyeDPIManager\logs\GoodbyeDPIManager.log</code>. Open the folder directly from <em>About → 📁 Log Folder</em>.</p>
+<p><strong>Logs:</strong> Runtime logs are stored at <code>%APPDATA%\GoodbyeDPIManager\logs\GoodbyeDPIManager.log</code>.</p>
 </blockquote>
 
 ---
@@ -202,55 +202,30 @@ cd GoodByeDPI-GUI</code></pre>
 
 <p><strong>5. Build the EXE</strong></p>
 
+<p><em>Option A — Quick build (copy-paste into CMD):</em></p>
+
 <pre><code>pyinstaller --onefile --windowed --uac-admin --clean ^
   --name "GoodByeDPI GUI" ^
   --add-data "assets;assets" ^
   --add-data "bin;bin" ^
   --icon=assets/logo.ico ^
-  --exclude-module PySide6.QtWebEngineCore ^
-  --exclude-module PySide6.QtWebEngineWidgets ^
-  --exclude-module PySide6.QtWebEngineQuick ^
-  --exclude-module PySide6.QtWebChannel ^
-  --exclude-module PySide6.Qt3DCore ^
-  --exclude-module PySide6.Qt3DRender ^
-  --exclude-module PySide6.Qt3DAnimation ^
-  --exclude-module PySide6.Qt3DExtras ^
-  --exclude-module PySide6.QtMultimedia ^
-  --exclude-module PySide6.QtMultimediaWidgets ^
-  --exclude-module PySide6.QtCharts ^
-  --exclude-module PySide6.QtDataVisualization ^
-  --exclude-module PySide6.QtQuick ^
-  --exclude-module PySide6.QtQuickWidgets ^
-  --exclude-module PySide6.QtQml ^
-  --exclude-module PySide6.QtSql ^
-  --exclude-module PySide6.QtTest ^
-  --exclude-module PySide6.QtDesigner ^
-  --exclude-module PySide6.QtHelp ^
-  --exclude-module PySide6.QtUiTools ^
-  --exclude-module PySide6.QtBluetooth ^
-  --exclude-module PySide6.QtNfc ^
-  --exclude-module PySide6.QtPdf ^
-  --exclude-module PySide6.QtPdfWidgets ^
-  --exclude-module PySide6.QtPositioning ^
-  --exclude-module PySide6.QtSerialPort ^
-  --exclude-module PySide6.QtSensors ^
-  --exclude-module PySide6.QtRemoteObjects ^
-  --exclude-module PySide6.QtScxml ^
-  --exclude-module PySide6.QtSpatialAudio ^
-  --exclude-module PySide6.QtStateMachine ^
-  --exclude-module PySide6.QtTextToSpeech ^
-  --exclude-module PySide6.QtXml ^
   main.py</code></pre>
+
+<p><em>Option B — One-click build script:</em></p>
+
+<p>The repository ships with a <code>build.bat</code> file at the project root. Simply <strong>double-click</strong> it (or run <code>build</code> from CMD) and it will:</p>
+
+<ul>
+  <li>Run PyInstaller with the correct flags</li>
+  <li>Rename the output from <code>GoodByeDPI GUI.exe</code> to <code>GoodByeDPI.GUI.exe</code></li>
+  <li>Show a clear success/failure message</li>
+</ul>
 
 <blockquote>
 <p>💡 On PowerShell use a backtick <code>`</code> instead of <code>^</code> for line continuation, or put the whole command on a single line.</p>
 </blockquote>
 
-<blockquote>
-<p>💡 <strong>These <code>--exclude-module</code> flags cut ~20 MB from the final EXE</strong> by removing Qt subsystems this app never uses. If you add a feature that needs one, remove its exclusion.</p>
-</blockquote>
-
-<p><strong>6. Find your EXE</strong> in the <code>dist/</code> folder and rename <code>GoodByeDPI GUI.exe</code> to <code>GoodByeDPI.GUI.exe</code>.</p>
+<p><strong>6. Find your EXE</strong> in the <code>dist/</code> folder and rename <code>GoodByeDPI GUI.exe</code> to <code>GoodByeDPI.GUI.exe</code> (or just use <code>build.bat</code>, which does this automatically).</p>
 
 ---
 
@@ -260,6 +235,7 @@ cd GoodByeDPI-GUI</code></pre>
 
 <pre><code>GoodByeDPI-GUI/
 ├── main.py                     ← entry point (run this)
+├── build.bat                   ← one-click build script
 ├── requirements.txt
 ├── README.md
 ├── LICENSE
@@ -360,7 +336,7 @@ python main.py</code></pre>
 <summary><strong>❌ Where are the log files?</strong></summary>
 <p>Runtime logs are written to:</p>
 <pre><code>%APPDATA%\GoodbyeDPIManager\logs\GoodbyeDPIManager.log</code></pre>
-<p>You can open the folder directly from <strong>About → 📁 Log Folder</strong>, or paste the path above into Windows Explorer. Logs are rotated automatically (up to 4 files, 1 MB each).</p>
+<p>Paste the path above into Windows Explorer to open it. Logs are rotated automatically (up to 4 files, 1 MB each).</p>
 </details>
 
 <p>
@@ -452,7 +428,7 @@ Every contribution — no matter how small — keeps the project alive and impro
 
 <p>
 Click the button above to view all supported networks<br>
-<strong>TRX</strong> · <strong>USDT (TRC-20 / ERC-20)</strong> · <strong>BTC</strong> · <strong>ETH</strong> · <strong>BNB</strong>
+<strong>TRX</strong> · <strong>USDT (TRC-20 / BEP-20)</strong> · <strong>BTC</strong> · <strong>ETH</strong> · <strong>BNB</strong>
 </p>
 
 <br>
