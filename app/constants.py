@@ -2,7 +2,7 @@
 from typing import List, NamedTuple
 
 APP_NAME = "GoodByeDPI GUI"
-APP_VERSION = "1.3.0"
+APP_VERSION = "1.4.0"
 
 # GitHub repository info
 GITHUB_OWNER = "ZvanTors"
@@ -45,13 +45,13 @@ LOGO_ICO_REL = "assets/logo.ico"
 # Mode presets (rendered as cards on the main window)
 # ---------------------------------------------------------------------
 class ModePreset(NamedTuple):
-    key:         str          # stable identifier, used for lookups
-    title:       str          # short name shown on the card
-    badge:       str          # small pill label ("" = none)
-    icon:        str          # single emoji / glyph
-    description: str          # one-line explanation under the title
-    args:        List[str]    # GoodbyeDPI arguments passed at start
-    tooltip:     str          # long hover text
+    key:         str
+    title:       str
+    badge:       str
+    icon:        str
+    description: str
+    args:        List[str]
+    tooltip:     str
 
 
 MODE_PRESETS: List[ModePreset] = [
@@ -92,7 +92,6 @@ MODE_PRESETS: List[ModePreset] = [
 ]
 
 
-# Convenient lookups
 CUSTOM_MODE_INDEX = next(
     (i for i, m in enumerate(MODE_PRESETS) if m.key == "custom"),
     len(MODE_PRESETS) - 1,
@@ -100,6 +99,12 @@ CUSTOM_MODE_INDEX = next(
 
 
 def download_url(version: str) -> str:
-    """Build the direct download URL for a specific release tag."""
+    """Build the direct download URL for a specific release tag.
+
+    Raises ValueError on empty input so callers never build a broken URL.
+    """
+    version = (version or "").strip()
+    if not version:
+        raise ValueError("version must be a non-empty string")
     tag = version if version.startswith(("V", "v")) else f"V{version}"
     return f"{RELEASES_PAGE}/download/{tag}/{ASSET_NAME}"

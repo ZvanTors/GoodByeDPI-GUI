@@ -7,7 +7,7 @@
 <meta name="description" content="A clean, powerful graphical interface for GoodbyeDPI. Bypass Deep Packet Inspection on Windows — no terminal, no config files.">
 <meta property="og:title" content="GoodByeDPI GUI — Bypass DPI. Browse Freely.">
 <meta property="og:description" content="A clean, powerful graphical interface for GoodbyeDPI on Windows.">
-<meta property="og:image" content="https://zvanTors.github.io/GoodByeDPI-GUI/assets/og-image.png">
+<meta property="og:image" content="https://zvantors.github.io/GoodByeDPI-GUI/assets/og-image.png">
 <meta property="og:url" content="https://github.com/ZvanTors/GoodByeDPI-GUI">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/x-icon" href="../assets/logo.ico">
@@ -34,7 +34,6 @@ a{color:var(--blue); text-decoration:none; transition:color .2s}
 a:hover{color:var(--blue-hi)}
 code,pre{font-family:'JetBrains Mono','Cascadia Code',monospace}
 
-/* ---------- Background ambience ---------- */
 .bg-glow{
   position:fixed; inset:0; pointer-events:none; z-index:0;
   background:
@@ -43,7 +42,6 @@ code,pre{font-family:'JetBrains Mono','Cascadia Code',monospace}
     radial-gradient(500px circle at 50% 100%, rgba(203,166,247,.06), transparent 60%);
 }
 
-/* ---------- Nav ---------- */
 nav{
   position:fixed; top:0; left:0; right:0; z-index:100;
   padding:16px 32px;
@@ -80,10 +78,8 @@ nav.scrolled{padding:10px 32px}
 }
 .nav-cta:hover{background:var(--green-hi); transform:translateY(-1px)}
 
-/* ---------- Container ---------- */
 .container{max-width:1200px; margin:0 auto; padding:0 32px; position:relative; z-index:1}
 
-/* ---------- Hero ---------- */
 .hero{padding:140px 0 90px; text-align:center}
 .hero-pill{
   display:inline-flex; align-items:center; gap:8px;
@@ -147,7 +143,6 @@ nav.scrolled{padding:10px 32px}
 }
 .hero-meta span{display:inline-flex; align-items:center; gap:6px}
 
-/* ---------- Screenshot ---------- */
 .screenshot-wrap{
   margin-top:70px; position:relative;
   perspective:1400px;
@@ -171,7 +166,6 @@ nav.scrolled{padding:10px 32px}
   font-size:12.5px; margin-top:20px;
 }
 
-/* ---------- Section ---------- */
 section{padding:100px 0; position:relative}
 .section-head{text-align:center; margin-bottom:60px}
 .section-kicker{
@@ -190,7 +184,6 @@ section{padding:100px 0; position:relative}
   max-width:580px; margin:0 auto;
 }
 
-/* ---------- Features grid ---------- */
 .features-grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
@@ -230,7 +223,6 @@ section{padding:100px 0; position:relative}
   font-size:13.5px; color:var(--subtext); line-height:1.6;
 }
 
-/* ---------- Steps ---------- */
 .steps{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
@@ -254,7 +246,6 @@ section{padding:100px 0; position:relative}
 .step h3{margin-top:8px; font-size:15.5px; font-weight:700; color:#fff; margin-bottom:8px}
 .step p{font-size:13.5px; color:var(--subtext)}
 
-/* ---------- Comparison ---------- */
 .compare{
   border-radius:14px; overflow:hidden;
   border:1px solid var(--surface1);
@@ -276,7 +267,6 @@ section{padding:100px 0; position:relative}
 .compare .cross{color:var(--red); font-weight:700}
 .compare tr:hover td{background:rgba(49,50,68,.25)}
 
-/* ---------- FAQ ---------- */
 .faq-list{max-width:760px; margin:0 auto; display:flex; flex-direction:column; gap:12px}
 details.faq{
   padding:18px 22px; border-radius:12px;
@@ -305,7 +295,6 @@ details.faq p{
   font-size:13.5px; line-height:1.7;
 }
 
-/* ---------- Final CTA ---------- */
 .final-cta{
   text-align:center; padding:70px 40px;
   border-radius:20px;
@@ -329,7 +318,6 @@ details.faq p{
 }
 .final-cta p{color:var(--subtext); font-size:15.5px; margin-bottom:32px; max-width:520px; margin-left:auto; margin-right:auto}
 
-/* ---------- Footer ---------- */
 footer{
   border-top:1px solid var(--surface1);
   padding:50px 0 30px;
@@ -361,11 +349,9 @@ footer{
 }
 .footer-bottom .heart{color:var(--red)}
 
-/* ---------- Reveal animation ---------- */
 .reveal{opacity:0; transform:translateY(24px); transition:opacity .7s cubic-bezier(.2,.8,.2,1), transform .7s cubic-bezier(.2,.8,.2,1)}
 .reveal.in{opacity:1; transform:none}
 
-/* ---------- Responsive ---------- */
 @media(max-width:820px){
   .nav-links a:not(.nav-cta){display:none}
   .footer-grid{grid-template-columns:1fr 1fr}
@@ -382,7 +368,6 @@ footer{
 <body>
 <div class="bg-glow"></div>
 
-<!-- ============ NAV ============ -->
 <nav id="nav">
   <div class="nav-inner">
     <a href="#" class="nav-logo">
@@ -400,12 +385,11 @@ footer{
   </div>
 </nav>
 
-<!-- ============ HERO ============ -->
 <header class="hero">
   <div class="container">
     <div class="hero-pill reveal">
       <span class="dot"></span>
-      <span>v1.3.0 — Now with Mode Cards & Toasts</span>
+      <span>v1.4.0 — Smoother, Safer, Cleaner</span>
     </div>
 
     <h1 class="reveal">Bypass DPI.<br>Browse Freely.</h1>
@@ -440,7 +424,6 @@ footer{
   </div>
 </header>
 
-<!-- ============ FEATURES ============ -->
 <section id="features">
   <div class="container">
     <div class="section-head reveal">
@@ -499,7 +482,6 @@ footer{
   </div>
 </section>
 
-<!-- ============ HOW IT WORKS ============ -->
 <section id="how" style="background:linear-gradient(180deg,transparent,rgba(24,24,37,.4),transparent)">
   <div class="container">
     <div class="section-head reveal">
@@ -533,7 +515,6 @@ footer{
   </div>
 </section>
 
-<!-- ============ COMPARE ============ -->
 <section id="compare">
   <div class="container">
     <div class="section-head reveal">
@@ -566,7 +547,6 @@ footer{
   </div>
 </section>
 
-<!-- ============ FAQ ============ -->
 <section id="faq" style="background:linear-gradient(180deg,transparent,rgba(24,24,37,.4),transparent)">
   <div class="container">
     <div class="section-head reveal">
@@ -604,7 +584,6 @@ footer{
   </div>
 </section>
 
-<!-- ============ FINAL CTA ============ -->
 <section>
   <div class="container">
     <div class="final-cta reveal">
@@ -622,7 +601,6 @@ footer{
   </div>
 </section>
 
-<!-- ============ FOOTER ============ -->
 <footer>
   <div class="container">
     <div class="footer-grid">
@@ -660,13 +638,11 @@ footer{
 </footer>
 
 <script>
-// Nav shrink on scroll
 const nav = document.getElementById('nav');
 window.addEventListener('scroll', () => {
   nav.classList.toggle('scrolled', window.scrollY > 20);
 }, {passive:true});
 
-// Reveal on scroll
 const io = new IntersectionObserver((entries) => {
   entries.forEach(e => {
     if (e.isIntersecting) {
@@ -677,7 +653,6 @@ const io = new IntersectionObserver((entries) => {
 }, {threshold:0.12, rootMargin:'0px 0px -40px 0px'});
 document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
-// Feature card cursor spotlight
 document.querySelectorAll('.feature').forEach(card => {
   card.addEventListener('mousemove', (e) => {
     const r = card.getBoundingClientRect();

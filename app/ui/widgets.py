@@ -3,12 +3,12 @@ import time
 
 from PySide6.QtCore import (
     Qt, QTimer, QPropertyAnimation, QEasingCurve,
-    QObject, Signal, QEvent,
+    QObject, Signal, QEvent, Property,
 )
 from PySide6.QtGui import QColor, QPainter
 from PySide6.QtWidgets import (
     QWidget, QFrame, QHBoxLayout, QVBoxLayout, QLabel,
-    QSizePolicy, QGraphicsOpacityEffect,
+    QSizePolicy, QGraphicsOpacityEffect, QPushButton,
 )
 
 
@@ -183,10 +183,7 @@ class UptimeChip(QFrame):
 # Mode selection — cards instead of a ComboBox
 # ==================================================================
 class ModeCard(QFrame):
-    """A single selectable card representing a DPI mode preset.
-
-    Emits `clicked` with its `key` when the user presses it.
-    """
+    """A single selectable card representing a DPI mode preset."""
 
     clicked = Signal(str)
 
@@ -216,14 +213,12 @@ class ModeCard(QFrame):
         layout.setContentsMargins(14, 12, 14, 12)
         layout.setSpacing(10)
 
-        # --- Icon on the left ---
         self._icon_lbl = QLabel(icon)
         self._icon_lbl.setObjectName("modeCardIcon")
         self._icon_lbl.setFixedWidth(34)
         self._icon_lbl.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
         self._icon_lbl.setAttribute(Qt.WA_TransparentForMouseEvents, True)
 
-        # --- Title row (title + optional badge) ---
         self._title_lbl = QLabel(title)
         self._title_lbl.setObjectName("modeCardTitle")
         self._title_lbl.setAttribute(Qt.WA_TransparentForMouseEvents, True)
@@ -243,7 +238,6 @@ class ModeCard(QFrame):
 
         title_row.addStretch()
 
-        # --- Description ---
         self._desc_lbl = QLabel(description)
         self._desc_lbl.setObjectName("modeCardDesc")
         self._desc_lbl.setWordWrap(True)
@@ -259,7 +253,6 @@ class ModeCard(QFrame):
         layout.addWidget(self._icon_lbl, 0, Qt.AlignTop)
         layout.addLayout(text_col, 1)
 
-    # ------------------------------------------------------------------
     @property
     def key(self) -> str:
         return self._key
@@ -272,15 +265,11 @@ class ModeCard(QFrame):
             return
         self._selected = selected
         self.setProperty("selected", selected)
-        # Force the QSS engine to re-evaluate selectors that depend on
-        # the ancestor's "selected" property.
+        # Only re-polish the card itself; its children already inherit
+        # the "selected" property through the QSS descendant selectors.
         self.style().unpolish(self)
         self.style().polish(self)
-        for lbl in self.findChildren(QLabel):
-            lbl.style().unpolish(lbl)
-            lbl.style().polish(lbl)
 
-    # ------------------------------------------------------------------
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.clicked.emit(self._key)
@@ -318,7 +307,6 @@ class ModeCardGroup(QWidget):
         if self._cards:
             self.set_current_index(0, emit=False)
 
-    # ------------------------------------------------------------------
     def current_index(self) -> int:
         return self._current
 
@@ -339,16 +327,11 @@ class ModeCardGroup(QWidget):
 # In-app toast notifications
 # ==================================================================
 class Toast(QFrame):
-    """A small, self-dismissing notification card.
-
-    Emits `dismissed` with itself once the fade-out finishes so the
-    manager can remove it from its stack.
-    """
+    """A small, self-dismissing notification card."""
 
     dismissed = Signal(object)
 
     _KINDS = {
-        # kind:  (icon, accent, border)
         "info":    ("ℹ", "#89b4fa", "rgba(137, 180, 250, 0.55)"),
         "success": ("✓", "#a6e3a1", "rgba(166, 227, 161, 0.55)"),
         "warning": ("⚠", "#f9e2af", "rgba(249, 226, 175, 0.55)"),
@@ -371,9 +354,6 @@ class Toast(QFrame):
             kind, self._KINDS["info"]
         )
 
-        # Per-kind colours — we use an inline stylesheet because the
-        # colour depends on `kind` at runtime and there is no easy way
-        # to express that purely through the shared dark QSS.
         self.setStyleSheet(f"""
             QFrame#toast {{
                 background-color: #1e1e2e;
@@ -404,7 +384,6 @@ class Toast(QFrame):
         layout.addWidget(icon_lbl, 0, Qt.AlignTop)
         layout.addWidget(msg_lbl, 1)
 
-        # Fade animation
         self._effect = QGraphicsOpacityEffect(self)
         self._effect.setOpacity(0.0)
         self.setGraphicsEffect(self._effect)
@@ -415,7 +394,6 @@ class Toast(QFrame):
         self._duration = duration
         self._fading_out = False
 
-    # ------------------------------------------------------------------
     def show_animated(self) -> None:
         self.show()
         self.raise_()
@@ -436,7 +414,6 @@ class Toast(QFrame):
         self._anim.setEndValue(0.0)
         self._anim.start()
 
-    # ------------------------------------------------------------------
     def _maybe_fade_out(self) -> None:
         if not self._fading_out:
             self.fade_out()
@@ -447,7 +424,6 @@ class Toast(QFrame):
             self.deleteLater()
 
     def mousePressEvent(self, event):
-        # Click anywhere on the toast dismisses it immediately.
         if event.button() == Qt.LeftButton:
             self.fade_out()
         super().mousePressEvent(event)
@@ -466,7 +442,6 @@ class ToastManager(QObject):
         self._toasts: list[Toast] = []
         host.installEventFilter(self)
 
-    # ------------------------------------------------------------------
     def show(
         self,
         message: str,
@@ -476,7 +451,6 @@ class ToastManager(QObject):
         toast = Toast(message, kind, duration, self._host)
         toast.dismissed.connect(self._on_dismissed)
 
-        # Clamp width so it fits the host even when the window is small.
         max_w = min(
             self._MAX_WIDTH,
             max(240, self._host.width() - 2 * self._MARGIN - 20),
@@ -488,7 +462,6 @@ class ToastManager(QObject):
         toast.show_animated()
         self._reposition()
 
-    # ------------------------------------------------------------------
     def _on_dismissed(self, toast: Toast) -> None:
         if toast in self._toasts:
             self._toasts.remove(toast)
@@ -508,8 +481,140 @@ class ToastManager(QObject):
             toast.move(x, y)
             y_bottom = y - self._SPACING
 
-    # ------------------------------------------------------------------
     def eventFilter(self, obj, event):
         if obj is self._host and event.type() == QEvent.Resize:
             self._reposition()
         return super().eventFilter(obj, event)
+
+
+# ==================================================================
+# Animated button (Start / Stop)
+# ==================================================================
+class AnimatedButton(QPushButton):
+    """QPushButton whose background colour animates between two palettes.
+
+    Why not just QSS + ``setEnabled``?
+    ----------------------------------
+    ``setEnabled(False)`` fires the ``:disabled`` QSS rule instantly, so
+    any color animation would be cut off. This button keeps Qt's enabled
+    state untouched and uses an internal ``_interactive`` flag to refuse
+    clicks. Its own stylesheet owns both the background and the hover /
+    pressed states, so the animation is never fighting the global theme.
+    """
+
+    def __init__(
+        self,
+        text: str,
+        active_hex: str,
+        object_name: str = "",
+        inactive_hex: str = "#1e1e2e",
+        active_fg: str = "#11111b",
+        inactive_fg: str = "#585b70",
+        parent=None,
+    ) -> None:
+        super().__init__(text, parent)
+        if object_name:
+            self.setObjectName(object_name)
+
+        self._active_hex = QColor(active_hex)
+        self._inactive_hex = QColor(inactive_hex)
+        self._active_fg = active_fg
+        self._inactive_fg = inactive_fg
+
+        self._current_bg = QColor(inactive_hex)
+        self._current_fg = inactive_fg
+        self._is_active = False
+        self._interactive = False
+
+        self._anim = QPropertyAnimation(self, b"animatedBg", self)
+        self._anim.setDuration(260)
+        self._anim.setEasingCurve(QEasingCurve.InOutCubic)
+
+        self.setCursor(Qt.ArrowCursor)
+        self._refresh_style()
+
+    # ------------------------------------------------------------------
+    # Animated property
+    # ------------------------------------------------------------------
+    def _get_bg(self) -> QColor:
+        return self._current_bg
+
+    def _set_bg(self, color: QColor) -> None:
+        self._current_bg = QColor(color)
+        self._refresh_style()
+
+    animatedBg = Property(QColor, _get_bg, _set_bg)
+
+    # ------------------------------------------------------------------
+    def _refresh_style(self) -> None:
+        name = self.objectName()
+        prefix = f"QPushButton#{name}" if name else "QPushButton"
+        self.setStyleSheet(f"""
+            {prefix} {{
+                background-color: {self._current_bg.name()};
+                color: {self._current_fg};
+                border: none;
+                border-radius: 9px;
+                padding: 10px 22px;
+                font-weight: 600;
+                min-width: 100px;
+                min-height: 20px;
+            }}
+            {prefix}:hover {{
+                background-color: {self._current_bg.lighter(115).name()};
+            }}
+            {prefix}:pressed {{
+                background-color: {self._current_bg.darker(120).name()};
+            }}
+        """)
+
+    # ------------------------------------------------------------------
+    def set_active(self, active: bool, animate: bool = True) -> None:
+        """Switch between active (colored) and inactive (grey) palettes."""
+        self._is_active = active
+        self._interactive = active
+        self._current_fg = self._active_fg if active else self._inactive_fg
+        self.setCursor(
+            Qt.PointingHandCursor if active else Qt.ArrowCursor
+        )
+
+        target = self._active_hex if active else self._inactive_hex
+
+        if not animate or not self.isVisible():
+            self._anim.stop()
+            self._set_bg(target)
+            return
+
+        if (self._current_bg == target
+                and self._anim.state() != QPropertyAnimation.Running):
+            self._refresh_style()   # text color may have changed
+            return
+
+        self._anim.stop()
+        self._anim.setStartValue(self._current_bg)
+        self._anim.setEndValue(target)
+        self._anim.start()
+
+    def is_active(self) -> bool:
+        return self._is_active
+
+    # ------------------------------------------------------------------
+    # Interaction guard (replaces Qt's disabled state)
+    # ------------------------------------------------------------------
+    def mousePressEvent(self, event):
+        if not self._interactive:
+            event.accept()
+            return
+        super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if not self._interactive:
+            event.accept()
+            return
+        super().mouseReleaseEvent(event)
+
+    def keyPressEvent(self, event):
+        if not self._interactive:
+            event.accept()
+            return
+        super().keyPressEvent(event)

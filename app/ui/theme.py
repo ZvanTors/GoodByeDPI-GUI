@@ -281,7 +281,6 @@ QPushButton#startBtn {
 }
 QPushButton#startBtn:hover    { background-color: #b8ecb4; }
 QPushButton#startBtn:pressed  { background-color: #94e2d5; }
-QPushButton#startBtn:disabled { background-color: #1e1e2e; color: #585b70; }
 
 QPushButton#stopBtn {
     background-color: #f38ba8;
@@ -290,7 +289,6 @@ QPushButton#stopBtn {
 }
 QPushButton#stopBtn:hover    { background-color: #eba0ac; }
 QPushButton#stopBtn:pressed  { background-color: #e64553; }
-QPushButton#stopBtn:disabled { background-color: #1e1e2e; color: #585b70; }
 
 QPushButton#updateBtn {
     background-color: #89b4fa;

@@ -1,5 +1,7 @@
 """Check GitHub for the latest release."""
+import logging
 import re
+import time
 import urllib.request
 
 from PySide6.QtCore import QObject, Signal, QThread
@@ -7,12 +9,15 @@ from PySide6.QtCore import QObject, Signal, QThread
 from app.constants import RELEASES_LATEST, APP_VERSION
 from app.utils import is_newer_version
 
+log = logging.getLogger(__name__)
+
 
 class _UpdateWorker(QThread):
     """Background worker that scrapes the /releases/latest redirect."""
-    found = Signal(str)       # emits new version string, e.g. "1.2.0"
-    not_found = Signal()      # emitted when no newer version was found
-    error = Signal()          # emitted when the check itself failed
+
+    found = Signal(str)
+    not_found = Signal()
+    error = Signal()
 
     def run(self) -> None:
         try:
@@ -23,11 +28,9 @@ class _UpdateWorker(QThread):
             with urllib.request.urlopen(req, timeout=10) as response:
                 final_url = response.url
 
-            # final_url looks like: .../releases/tag/V1.2.0
             m = re.search(r"/tag/[vV]?([0-9]+(?:\.[0-9]+)*)", final_url)
             if not m:
-                # Redirect succeeded but we couldn't parse a version tag.
-                # Don't claim "up to date" — report it as a failed check.
+                log.warning("Updater: could not parse version from %s", final_url)
                 self.error.emit()
                 return
 
@@ -36,33 +39,55 @@ class _UpdateWorker(QThread):
                 self.found.emit(latest)
             else:
                 self.not_found.emit()
-        except Exception:
-            # Network error, timeout, DNS failure, etc.
+        except Exception as exc:
+            log.info("Update check failed: %s", exc)
             self.error.emit()
 
 
 class UpdateChecker(QObject):
     """High-level API for checking updates."""
 
-    update_available = Signal(str)  # new version string
-    up_to_date = Signal()           # emitted only for manual checks when nothing found
-    error = Signal()                # emitted only for manual checks when the check failed
+    update_available = Signal(str)
+    up_to_date = Signal()
+    error = Signal()
+
+    #: Minimum interval between silent (non-manual) checks, in seconds.
+    _SILENT_INTERVAL_S = 60.0
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self._worker: _UpdateWorker | None = None
+        self._last_check_ts: float = 0.0
 
     def check_async(self, manual: bool = False) -> None:
-        """Start a background check.
+        """Start a background check. Safe to call repeatedly.
 
-        If `manual`, emit `up_to_date` or `error` depending on the outcome.
+        - Only one worker runs at a time.
+        - Silent (non-manual) checks are rate-limited to avoid hammering
+          GitHub when the user opens/closes the window repeatedly.
         """
         if self._worker is not None and self._worker.isRunning():
             return
+
+        now = time.monotonic()
+        if (not manual
+                and (now - self._last_check_ts) < self._SILENT_INTERVAL_S):
+            log.debug("Silent update check skipped (rate-limited)")
+            return
+        self._last_check_ts = now
+
         worker = _UpdateWorker(self)
         worker.found.connect(self.update_available)
         if manual:
             worker.not_found.connect(self.up_to_date)
             worker.error.connect(self.error)
+
+        # Prevent QThread leak: delete when the thread finishes.
+        worker.finished.connect(worker.deleteLater)
+        worker.finished.connect(self._on_worker_finished)
+
         self._worker = worker
         worker.start()
+
+    def _on_worker_finished(self) -> None:
+        self._worker = None

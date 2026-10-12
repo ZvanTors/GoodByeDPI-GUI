@@ -11,7 +11,7 @@
 <br>
 
 <p>
-<a href="https://github.com/ZvanTors/GoodByeDPI-GUI/releases"><img src="https://img.shields.io/badge/version-1.3.0-2563EB?style=for-the-badge&logo=github&logoColor=white" alt="Version"></a>
+<a href="https://github.com/ZvanTors/GoodByeDPI-GUI/releases"><img src="https://img.shields.io/badge/version-1.4.0-2563EB?style=for-the-badge&logo=github&logoColor=white" alt="Version"></a>
 <a href="https://www.microsoft.com/windows"><img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Platform"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="License"></a>
 </p>
@@ -66,7 +66,7 @@ If your ISP blocks websites using <strong>Deep Packet Inspection (DPI)</strong>,
 </p>
 
 <blockquote>
-<p>💡 <strong>Best part:</strong> it doesn’t slow down your connection, doesn’t affect games, and runs entirely on your machine. No servers, no logs, no subscriptions.</p>
+<p>💡 <strong>Best part:</strong> it doesn't slow down your connection, doesn't affect games, and runs entirely on your machine. No servers, no logs, no subscriptions.</p>
 </blockquote>
 
 <p>
@@ -86,23 +86,24 @@ If your ISP blocks websites using <strong>Deep Packet Inspection (DPI)</strong>,
   </thead>
   <tbody>
     <tr><td>🖥 <strong>Fully Graphical</strong></td><td>No terminal, no scripts — a clean PySide6 GUI</td></tr>
-    <tr><td>⚡ <strong>One-Click Start / Stop</strong></td><td>Activate or deactivate DPI circumvention instantly</td></tr>
+    <tr><td>⚡ <strong>One-Click Start / Stop</strong></td><td>Activate or deactivate DPI circumvention instantly, with smooth button animations</td></tr>
     <tr><td>🎛 <strong>Mode Cards</strong></td><td>Pick <em>Fast</em> (recommended), <em>Compatible</em>, or <em>Custom</em> from visual cards with badges instead of a dropdown</td></tr>
     <tr><td>🔧 <strong>Custom Arguments</strong></td><td>Advanced users can pass any GoodbyeDPI flags</td></tr>
-    <tr><td>📖 <strong>Arguments Guide</strong></td><td>Built-in tabbed reference of every GoodbyeDPI flag with a one-click “add” button</td></tr>
-    <tr><td>ℹ️ <strong>About Dialog</strong></td><td>Click the version badge to see the app version, Powered-by libraries (with links), and credits</td></tr>
+    <tr><td>📖 <strong>Arguments Guide</strong></td><td>Built-in tabbed reference of every GoodbyeDPI flag with a one-click "add" button</td></tr>
+    <tr><td>ℹ️ <strong>About Dialog</strong></td><td>Click the version badge to see the app version, Powered-by libraries, and a shortcut to the log folder</td></tr>
     <tr><td>✅ <strong>Live Args Validator</strong></td><td>Real-time feedback on custom arguments — catches typos, missing values, and conflicting flags before you start</td></tr>
-    <tr><td>🍞 <strong>In-App Toast Notifications</strong></td><td>Friendly, dismissible notifications for actions like copying logs and toggling auto-start — no more intrusive popups</td></tr>
-    <tr><td>🎞 <strong>Smooth Window Resize</strong></td><td>Window height animates gracefully when switching to Custom mode, keeping everything perfectly in place</td></tr>
+    <tr><td>🍞 <strong>In-App Toast Notifications</strong></td><td>Friendly, dismissible notifications for actions like copying logs and toggling auto-start</td></tr>
+    <tr><td>🎞 <strong>Smooth Window Resize</strong></td><td>Window height animates gracefully when switching to Custom mode</td></tr>
     <tr><td>🚀 <strong>Auto-Start with Windows</strong></td><td>Optional Task Scheduler integration</td></tr>
-    <tr><td>📋 <strong>Color-Coded Live Log</strong></td><td>Errors in red, warnings in yellow, and separators in blue — updated in real time</td></tr>
+    <tr><td>📋 <strong>Color-Coded Live Log</strong></td><td>Errors in red, warnings in yellow, and separators in blue — capped at 2000 lines to keep memory flat</td></tr>
     <tr><td>📦 <strong>Single Portable EXE</strong></td><td>Everything bundled — no installation, no dependencies</td></tr>
     <tr><td>🌐 <strong>Auto Update Checker</strong></td><td>Notifies you when a new version is available with a direct download link</td></tr>
-    <tr><td>🛡 <strong>Zero Impact</strong></td><td>Doesn’t affect games, streaming, or general traffic</td></tr>
+    <tr><td>🛡 <strong>Zero Impact</strong></td><td>Doesn't affect games, streaming, or general traffic</td></tr>
     <tr><td>🔔 <strong>System Tray Support</strong></td><td>Runs quietly in the background with Start / Stop / Exit controls</td></tr>
     <tr><td>⏱ <strong>Uptime Counter</strong></td><td>Live session timer while GoodbyeDPI is running</td></tr>
     <tr><td>🎨 <strong>Modern Dark UI</strong></td><td>Catppuccin-inspired theme with background gradient, rounded cards, floating pill titles, and a native dark title bar</td></tr>
-    <tr><td>💾 <strong>Persistent Settings</strong></td><td>Window position, mode, and custom arguments remembered between sessions</td></tr>
+    <tr><td>💾 <strong>Persistent Settings</strong></td><td>Window position, mode, custom arguments, and close-behaviour remembered between sessions</td></tr>
+    <tr><td>📝 <strong>Runtime Logs</strong></td><td>Structured logs written to <code>%APPDATA%\GoodbyeDPIManager\logs\</code> for post-crash diagnostics</td></tr>
   </tbody>
 </table>
 
@@ -150,11 +151,15 @@ Double-click the EXE. Windows will request <strong>administrator privileges</str
 </blockquote>
 
 <blockquote>
-<p><strong>Tip — Auto-start:</strong> Enable <strong>“Run on Windows startup”</strong> to have GoodByeDPI launch automatically when you log in.</p>
+<p><strong>Tip — Auto-start:</strong> Enable <strong>"Run on Windows startup"</strong> to have GoodByeDPI launch automatically when you log in.</p>
 </blockquote>
 
 <blockquote>
-<p><strong>Tray:</strong> Closing the window asks whether to exit or minimize to the system tray. From the tray you can Start, Stop, or Exit at any time.</p>
+<p><strong>Tray:</strong> Closing the window asks whether to exit or minimize to the system tray. Tick <em>Remember my choice</em> to skip the prompt next time. From the tray you can Start, Stop, or Exit at any time.</p>
+</blockquote>
+
+<blockquote>
+<p><strong>Logs:</strong> Runtime logs are stored at <code>%APPDATA%\GoodbyeDPIManager\logs\GoodbyeDPIManager.log</code>. Open the folder directly from <em>About → 📁 Log Folder</em>.</p>
 </blockquote>
 
 ---
@@ -197,14 +202,52 @@ cd GoodByeDPI-GUI</code></pre>
 
 <p><strong>5. Build the EXE</strong></p>
 
-<pre><code>pyinstaller --onefile --windowed --uac-admin --name "GoodByeDPI GUI" ^
+<pre><code>pyinstaller --onefile --windowed --uac-admin --clean ^
+  --name "GoodByeDPI GUI" ^
   --add-data "assets;assets" ^
   --add-data "bin;bin" ^
   --icon=assets/logo.ico ^
+  --exclude-module PySide6.QtWebEngineCore ^
+  --exclude-module PySide6.QtWebEngineWidgets ^
+  --exclude-module PySide6.QtWebEngineQuick ^
+  --exclude-module PySide6.QtWebChannel ^
+  --exclude-module PySide6.Qt3DCore ^
+  --exclude-module PySide6.Qt3DRender ^
+  --exclude-module PySide6.Qt3DAnimation ^
+  --exclude-module PySide6.Qt3DExtras ^
+  --exclude-module PySide6.QtMultimedia ^
+  --exclude-module PySide6.QtMultimediaWidgets ^
+  --exclude-module PySide6.QtCharts ^
+  --exclude-module PySide6.QtDataVisualization ^
+  --exclude-module PySide6.QtQuick ^
+  --exclude-module PySide6.QtQuickWidgets ^
+  --exclude-module PySide6.QtQml ^
+  --exclude-module PySide6.QtSql ^
+  --exclude-module PySide6.QtTest ^
+  --exclude-module PySide6.QtDesigner ^
+  --exclude-module PySide6.QtHelp ^
+  --exclude-module PySide6.QtUiTools ^
+  --exclude-module PySide6.QtBluetooth ^
+  --exclude-module PySide6.QtNfc ^
+  --exclude-module PySide6.QtPdf ^
+  --exclude-module PySide6.QtPdfWidgets ^
+  --exclude-module PySide6.QtPositioning ^
+  --exclude-module PySide6.QtSerialPort ^
+  --exclude-module PySide6.QtSensors ^
+  --exclude-module PySide6.QtRemoteObjects ^
+  --exclude-module PySide6.QtScxml ^
+  --exclude-module PySide6.QtSpatialAudio ^
+  --exclude-module PySide6.QtStateMachine ^
+  --exclude-module PySide6.QtTextToSpeech ^
+  --exclude-module PySide6.QtXml ^
   main.py</code></pre>
 
 <blockquote>
 <p>💡 On PowerShell use a backtick <code>`</code> instead of <code>^</code> for line continuation, or put the whole command on a single line.</p>
+</blockquote>
+
+<blockquote>
+<p>💡 <strong>These <code>--exclude-module</code> flags cut ~20 MB from the final EXE</strong> by removing Qt subsystems this app never uses. If you add a feature that needs one, remove its exclusion.</p>
 </blockquote>
 
 <p><strong>6. Find your EXE</strong> in the <code>dist/</code> folder and rename <code>GoodByeDPI GUI.exe</code> to <code>GoodByeDPI.GUI.exe</code>.</p>
@@ -243,7 +286,8 @@ cd GoodByeDPI-GUI</code></pre>
     │
     ├── core/                   ← services &amp; business logic
     │   ├── controller.py       ← wires UI, tray, settings, updater
-    │   └── updater.py          ← GitHub release checker (QThread)
+    │   ├── updater.py          ← GitHub release checker (QThread)
+    │   └── logging_setup.py    ← rotating file logger
     │
     └── ui/                     ← presentation layer
         ├── main_window.py      ← main window (signals only)
@@ -251,7 +295,7 @@ cd GoodByeDPI-GUI</code></pre>
         │                          DonateDialog / Args Guide
         ├── widgets.py          ← StatusDot, StatusPill, UptimeChip,
         │                          ModeCard, ModeCardGroup,
-        │                          Toast, ToastManager
+        │                          Toast, ToastManager, AnimatedButton
         ├── theme.py            ← Catppuccin-inspired QSS
         └── tray.py             ← system tray icon &amp; menu</code></pre>
 
@@ -261,7 +305,7 @@ cd GoodByeDPI-GUI</code></pre>
 <ul>
   <li><strong>UI is pure</strong> — <code>app/ui/</code> only emits Qt signals and never performs business logic.</li>
   <li><strong>Core is testable</strong> — <code>app/core/</code> has no direct dependency on widgets.</li>
-  <li><strong>Cross-cutting helpers</strong> (<code>utils</code>, <code>settings</code>, <code>validator</code>) sit at the package root.</li>
+  <li><strong>Cross-cutting helpers</strong> (<code>utils</code>, <code>settings</code>, <code>validator</code>, <code>logging_setup</code>) sit at the package root or in <code>core/</code>.</li>
   <li><strong>Bundled resources</strong> are resolved via <code>utils.resource_path()</code>, so paths work both from source and inside a PyInstaller build.</li>
   <li><strong>Landing page</strong> lives in <code>docs/</code> and is served via GitHub Pages.</li>
 </ul>
@@ -271,7 +315,7 @@ cd GoodByeDPI-GUI</code></pre>
 <h2 id="-troubleshooting">🩺 Troubleshooting</h2>
 
 <details>
-<summary><strong>❌ The program won’t start / asks for admin again</strong></summary>
+<summary><strong>❌ The program won't start / asks for admin again</strong></summary>
 <p>Right-click the EXE → <strong>Run as administrator</strong>. The UAC prompt is expected.</p>
 </details>
 
@@ -281,7 +325,7 @@ cd GoodByeDPI-GUI</code></pre>
 </details>
 
 <details>
-<summary><strong>❌ Websites still don’t open</strong></summary>
+<summary><strong>❌ Websites still don't open</strong></summary>
 <ul>
   <li>Try the <code>Compatible</code> card instead of <code>Fast</code>.</li>
   <li>Use <strong>Custom</strong> mode with: <code>-f 2 -e 40 --native-frag --reverse-frag --max-payload</code></li>
@@ -291,18 +335,18 @@ cd GoodByeDPI-GUI</code></pre>
 </details>
 
 <details>
-<summary><strong>❌ Auto-start isn’t working</strong></summary>
+<summary><strong>❌ Auto-start isn't working</strong></summary>
 <ol>
   <li>Open <strong>Task Scheduler</strong> (<code>taskschd.msc</code>).</li>
   <li>Locate the task named <strong>GoodbyeDPIManager</strong>.</li>
-  <li>Make sure <strong>“Run with highest privileges”</strong> is checked.</li>
+  <li>Make sure <strong>"Run with highest privileges"</strong> is checked.</li>
   <li>If missing, uncheck and re-check the option in the GUI.</li>
 </ol>
 </details>
 
 <details>
-<summary><strong>❌ Update dialog doesn’t appear</strong></summary>
-<p>The update check runs silently in the background. If no popup appears, you’re either up to date or offline. A toast notification will confirm either way when you click <strong>🔄 Check for updates</strong> in the bottom-left of the window.</p>
+<summary><strong>❌ Update dialog doesn't appear</strong></summary>
+<p>The update check runs silently in the background. If no popup appears, you're either up to date or offline. A toast notification will confirm either way when you click <strong>🔄 Check for updates</strong> in the bottom-left of the window.</p>
 </details>
 
 <details>
@@ -310,6 +354,13 @@ cd GoodByeDPI-GUI</code></pre>
 <p>Run the app <strong>from the project root</strong>, not from inside a subfolder:</p>
 <pre><code>cd GoodByeDPI-GUI
 python main.py</code></pre>
+</details>
+
+<details>
+<summary><strong>❌ Where are the log files?</strong></summary>
+<p>Runtime logs are written to:</p>
+<pre><code>%APPDATA%\GoodbyeDPIManager\logs\GoodbyeDPIManager.log</code></pre>
+<p>You can open the folder directly from <strong>About → 📁 Log Folder</strong>, or paste the path above into Windows Explorer. Logs are rotated automatically (up to 4 files, 1 MB each).</p>
 </details>
 
 <p>

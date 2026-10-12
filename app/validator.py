@@ -28,6 +28,22 @@ _MODESETS = frozenset({
 })
 
 
+def _looks_like_value(tok: str) -> bool:
+    """Return True if `tok` should be treated as a flag value.
+
+    A token is a value if it does not start with '-' OR it parses as a
+    number (this covers negative values such as ``--port -1``, which the
+    old validator misclassified as a modeset).
+    """
+    if not tok.startswith("-"):
+        return True
+    try:
+        float(tok)
+        return True
+    except ValueError:
+        return False
+
+
 class ValidationResult:
     """Outcome of validating a custom arguments string."""
 
@@ -68,50 +84,43 @@ def validate_args(args_str: str) -> ValidationResult:
     while i < n:
         tok = tokens[i]
 
-        # A bare word (not starting with '-') in a flag position
         if not tok.startswith("-"):
             result.errors.append(f"Unexpected value: '{tok}'")
             i += 1
             continue
 
-        # Modeset (e.g. -6)
         if tok in _MODESETS:
             modesets.append(tok)
             seen.add(tok)
             i += 1
             continue
 
-        # Flag that takes no value
         if tok in _FLAGS_NO_VALUE:
             seen.add(tok)
             i += 1
             continue
 
-        # Flag that requires a value
         if tok in _FLAGS_WITH_VALUE:
             seen.add(tok)
-            if i + 1 < n and not tokens[i + 1].startswith("-"):
+            if i + 1 < n and _looks_like_value(tokens[i + 1]):
                 i += 2
             else:
                 result.errors.append(f"'{tok}' requires a value")
                 i += 1
             continue
 
-        # Flag whose value is optional
         if tok in _FLAGS_OPTIONAL_VALUE:
             seen.add(tok)
-            if i + 1 < n and not tokens[i + 1].startswith("-"):
+            if i + 1 < n and _looks_like_value(tokens[i + 1]):
                 i += 2
             else:
                 i += 1
             continue
 
-        # Unknown flag
         result.errors.append(f"Unknown flag: '{tok}'")
         i += 1
 
     # ---------------- Cross-flag checks ----------------
-
     if len(modesets) > 1:
         result.warnings.append(
             f"Multiple modesets combined: {', '.join(modesets)}"

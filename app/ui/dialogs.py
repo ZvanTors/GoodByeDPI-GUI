@@ -1,4 +1,7 @@
 """Custom dialogs used by the application."""
+import logging
+import os
+
 from PySide6.QtCore import Qt, QUrl, QTimer
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
@@ -15,6 +18,9 @@ from app.constants import (
     PYSIDE_URL,
     WINDIVERT_URL,
 )
+from app.core.logging_setup import get_log_file_path
+
+log = logging.getLogger(__name__)
 
 
 # =================================================================
@@ -24,24 +30,15 @@ from app.constants import (
 # =================================================================
 CUSTOM_ARGS_GUIDE = {
     "Presets": [
-        ("-1", "Legacy: most compatible mode",
-         "-1", ""),
-        ("-2", "Legacy: better HTTPS speed",
-         "-2", ""),
-        ("-3", "Legacy: HTTP + HTTPS",
-         "-3", ""),
-        ("-4", "Legacy: best speed",
-         "-4", ""),
-        ("-5", "Modern: auto-TTL, stable",
-         "-5", "recommended"),
-        ("-6", "Modern: fake SEQ, fast",
-         "-6", "recommended"),
-        ("-7", "Modern: fake checksum",
-         "-7", ""),
-        ("-8", "Modern: fake SEQ + checksum",
-         "-8", ""),
-        ("-9", "Modern: default in GoodbyeDPI",
-         "-9", "default"),
+        ("-1", "Legacy: most compatible mode",       "-1", ""),
+        ("-2", "Legacy: better HTTPS speed",         "-2", ""),
+        ("-3", "Legacy: HTTP + HTTPS",               "-3", ""),
+        ("-4", "Legacy: best speed",                 "-4", ""),
+        ("-5", "Modern: auto-TTL, stable",           "-5", "recommended"),
+        ("-6", "Modern: fake SEQ, fast",             "-6", "recommended"),
+        ("-7", "Modern: fake checksum",              "-7", ""),
+        ("-8", "Modern: fake SEQ + checksum",        "-8", ""),
+        ("-9", "Modern: default in GoodbyeDPI",      "-9", "default"),
     ],
     "Basic": [
         ("-p", "Block passive DPI",                     "-p",  ""),
@@ -54,14 +51,10 @@ CUSTOM_ARGS_GUIDE = {
          "--max-payload", "recommended"),
     ],
     "Fragmentation": [
-        ("-f <n>", "HTTP fragmentation value",
-         "-f 2", ""),
-        ("-k <n>", "HTTP keep-alive fragmentation",
-         "-k 2", ""),
-        ("-n", "Don't wait for first ACK (needs -k)",
-         "-n", ""),
-        ("-e <n>", "HTTPS fragmentation value",
-         "-e 40", ""),
+        ("-f <n>", "HTTP fragmentation value",          "-f 2", ""),
+        ("-k <n>", "HTTP keep-alive fragmentation",     "-k 2", ""),
+        ("-n", "Don't wait for first ACK (needs -k)",   "-n", ""),
+        ("-e <n>", "HTTPS fragmentation value",         "-e 40", ""),
         ("--native-frag", "Split packets, don't shrink window",
          "--native-frag", "recommended"),
         ("--reverse-frag", "Send fragments in reverse order",
@@ -277,7 +270,7 @@ class AboutDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("About GoodByeDPI GUI")
         self.setModal(True)
-        self.setFixedWidth(480)
+        self.setFixedWidth(500)
         self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
 
         self.setStyleSheet("""
@@ -324,6 +317,20 @@ class AboutDialog(QDialog):
             }
             QPushButton#aboutGithubBtn:hover   { background-color: #45475a; border-color: #585b70; }
             QPushButton#aboutGithubBtn:pressed { background-color: #585b70; }
+            QPushButton#aboutLogBtn {
+                background-color: rgba(137, 180, 250, 0.10);
+                border: 1px solid rgba(137, 180, 250, 0.30);
+                border-radius: 9px; padding: 10px 20px;
+                color: #89b4fa; font-weight: 600; min-width: 120px;
+            }
+            QPushButton#aboutLogBtn:hover {
+                background-color: rgba(137, 180, 250, 0.20);
+                border-color: rgba(137, 180, 250, 0.55);
+                color: #a5c8ff;
+            }
+            QPushButton#aboutLogBtn:pressed {
+                background-color: rgba(137, 180, 250, 0.32);
+            }
             QPushButton#aboutCloseBtn {
                 background-color: #89b4fa; border: none; border-radius: 9px;
                 padding: 10px 22px; color: #11111b;
@@ -418,7 +425,7 @@ class AboutDialog(QDialog):
         layout.setContentsMargins(18, 12, 18, 12)
         layout.setSpacing(7)
 
-        heart = QLabel("❤");       heart.setObjectName("aboutHeart")
+        heart = QLabel("❤");        heart.setObjectName("aboutHeart")
         made = QLabel("Made with"); made.setObjectName("aboutMuted")
         auth = QLabel(AUTHOR_NAME); auth.setObjectName("aboutAuthor")
         dot  = QLabel("·");         dot.setObjectName("aboutMuted")
@@ -432,6 +439,13 @@ class AboutDialog(QDialog):
     def _build_buttons(self) -> QHBoxLayout:
         row = QHBoxLayout()
         row.setSpacing(10)
+
+        log_btn = QPushButton("📁  Log Folder")
+        log_btn.setObjectName("aboutLogBtn")
+        log_btn.setCursor(Qt.PointingHandCursor)
+        log_btn.setToolTip("Open the folder containing runtime logs")
+        log_btn.clicked.connect(self._open_log_folder)
+
         github_btn = QPushButton("⭐  GitHub")
         github_btn.setObjectName("aboutGithubBtn")
         github_btn.setCursor(Qt.PointingHandCursor)
@@ -442,13 +456,30 @@ class AboutDialog(QDialog):
         close_btn.setDefault(True)
         close_btn.clicked.connect(self.accept)
 
+        row.addWidget(log_btn)
         row.addWidget(github_btn)
         row.addStretch()
         row.addWidget(close_btn)
         return row
 
     def _open_github(self) -> None:
-        QDesktopServices.openUrl(QUrl(GITHUB_URL))
+        try:
+            QDesktopServices.openUrl(QUrl(GITHUB_URL))
+        except Exception as exc:
+            log.warning("Failed to open GitHub URL: %s", exc)
+
+    def _open_log_folder(self) -> None:
+        """Open the log directory in the system file browser.
+
+        We deliberately open the *folder*, not the file, because the user
+        may want to attach the log to a bug report or zip it.
+        """
+        try:
+            folder = os.path.dirname(get_log_file_path())
+            os.makedirs(folder, exist_ok=True)
+            QDesktopServices.openUrl(QUrl.fromLocalFile(folder))
+        except Exception as exc:
+            log.warning("Failed to open log folder: %s", exc)
 
 
 # ----------------------------------------------------------------
@@ -495,7 +526,6 @@ class CustomArgsHelpDialog(QDialog):
             }
             QLineEdit#argSearch:focus { border-color: #89b4fa; }
 
-            /* Tabs */
             QTabWidget::pane {
                 border: none; background: transparent; top: -1px;
             }
@@ -520,7 +550,6 @@ class CustomArgsHelpDialog(QDialog):
                 color: #cdd6f4;
             }
 
-            /* Item cards */
             QFrame#argItem {
                 background-color: #1e1e2e;
                 border: 1px solid #313244;
@@ -612,7 +641,6 @@ class CustomArgsHelpDialog(QDialog):
 
         root.addLayout(self._build_header())
 
-        # ---- Search box ----
         self._search = QLineEdit()
         self._search.setObjectName("argSearch")
         self._search.setPlaceholderText(
@@ -621,7 +649,6 @@ class CustomArgsHelpDialog(QDialog):
         self._search.textChanged.connect(self._on_search)
         root.addWidget(self._search)
 
-        # ---- Tabs ----
         self._tabs = QTabWidget()
         self._tabs.setDocumentMode(True)
         for category, items in CUSTOM_ARGS_GUIDE.items():
@@ -632,7 +659,6 @@ class CustomArgsHelpDialog(QDialog):
             )
         root.addWidget(self._tabs, 1)
 
-        # ---- Live preview ----
         preview_box = QVBoxLayout()
         preview_box.setSpacing(4)
 
@@ -648,7 +674,6 @@ class CustomArgsHelpDialog(QDialog):
         preview_box.addWidget(self._preview)
         root.addLayout(preview_box)
 
-        # ---- Buttons ----
         root.addLayout(self._build_footer())
 
     # ----------------------------------------------------------------
@@ -816,6 +841,9 @@ class DonateDialog(QDialog):
         self._wallet = wallet
         self._tronscan_url = tronscan_url
 
+        # B1 fix: own the reset timer so we can stop it cleanly on close.
+        self._copy_reset_timer: QTimer | None = None
+
         self.setStyleSheet("""
             QDialog { background-color: #11111b; }
             QLabel { color: #cdd6f4; background: transparent; }
@@ -828,7 +856,6 @@ class DonateDialog(QDialog):
                 color: #a6adc8; font-size: 9.5pt;
             }
 
-            /* Asset chips */
             QFrame#assetChip {
                 background-color: #1e1e2e;
                 border: 1px solid #313244;
@@ -842,7 +869,6 @@ class DonateDialog(QDialog):
                 letter-spacing: 0.5px;
             }
 
-            /* Wallet address box */
             QFrame#walletBox {
                 background-color: #0d0d15;
                 border: 1px solid #262637;
@@ -859,7 +885,6 @@ class DonateDialog(QDialog):
                 letter-spacing: 0.5px;
             }
 
-            /* Warning box */
             QFrame#warningBox {
                 background-color: rgba(249, 226, 175, 0.08);
                 border: 1px solid rgba(249, 226, 175, 0.30);
@@ -872,7 +897,6 @@ class DonateDialog(QDialog):
                 color: #f9e2af; font-size: 11pt; font-weight: 800;
             }
 
-            /* Buttons */
             QPushButton#copyBtn {
                 background-color: rgba(166, 227, 161, 0.10);
                 color: #a6e3a1;
@@ -1012,9 +1036,39 @@ class DonateDialog(QDialog):
         return frame
 
     def _copy_address(self) -> None:
-        QApplication.clipboard().setText(self._wallet)
+        """Copy the wallet and flash the button label.
+
+        B1 fix: the previous implementation used ``QTimer.singleShot`` with
+        a lambda that captured ``self``. If the dialog was closed within
+        1.5 s the C++ object had already been destroyed → RuntimeError.
+        We now own the timer and stop it on close.
+        """
+        try:
+            QApplication.clipboard().setText(self._wallet)
+        except Exception as exc:
+            log.warning("clipboard write failed: %s", exc)
+            return
+
         self._copy_btn.setText("✓  Copied")
-        QTimer.singleShot(1500, lambda: self._copy_btn.setText("Copy"))
+
+        if self._copy_reset_timer is None:
+            self._copy_reset_timer = QTimer(self)
+            self._copy_reset_timer.setSingleShot(True)
+            self._copy_reset_timer.timeout.connect(self._reset_copy_btn)
+        self._copy_reset_timer.start(1500)
+
+    def _reset_copy_btn(self) -> None:
+        try:
+            self._copy_btn.setText("Copy")
+        except RuntimeError:
+            # C++ object already gone — ignore silently.
+            pass
+
+    def done(self, result: int) -> None:
+        """Stop the reset timer before the dialog is torn down."""
+        if self._copy_reset_timer is not None:
+            self._copy_reset_timer.stop()
+        super().done(result)
 
     # ----------------------------------------------------------------
     def _build_warning(self) -> QFrame:
@@ -1065,4 +1119,7 @@ class DonateDialog(QDialog):
         return row
 
     def _open_tronscan(self) -> None:
-        QDesktopServices.openUrl(QUrl(self._tronscan_url))
+        try:
+            QDesktopServices.openUrl(QUrl(self._tronscan_url))
+        except Exception as exc:
+            log.warning("Failed to open Tronscan URL: %s", exc)

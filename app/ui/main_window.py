@@ -1,4 +1,6 @@
 """Pure UI for GoodByeDPI GUI. Exposes signals for user actions."""
+import logging
+
 from PySide6.QtCore import (
     Qt, Signal, QRect, QPropertyAnimation, QEasingCurve,
 )
@@ -8,15 +10,17 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QTextEdit, QLineEdit, QCheckBox,
-    QGroupBox, QFrame, QSizePolicy, QApplication,
+    QGroupBox, QFrame, QSizePolicy, QApplication, QMessageBox,
 )
 
 from app.constants import APP_VERSION, MODE_PRESETS, LOGO_ICO_REL
 from app.ui.theme import DARK_QSS
 from app.ui.widgets import (
-    StatusPill, UptimeChip, ModeCardGroup, ToastManager,
+    StatusPill, UptimeChip, ModeCardGroup, ToastManager, AnimatedButton,
 )
 from app.utils import resource_path
+
+log = logging.getLogger(__name__)
 
 
 # ------------------------------------------------------------------
@@ -26,18 +30,23 @@ class MainWindow(QMainWindow):
     """The main application window (UI only, no business logic)."""
 
     # User-action signals
-    start_clicked            = Signal()
-    stop_clicked             = Signal()
-    mode_changed             = Signal(int)
-    custom_args_changed      = Signal(str)
-    autostart_toggled        = Signal(bool)
-    close_choice             = Signal(str)
-    check_update_clicked     = Signal()
-    donate_clicked           = Signal()
-    clear_log_clicked        = Signal()
-    copy_log_clicked         = Signal()
-    about_clicked            = Signal()
-    custom_args_help_clicked = Signal()
+    start_clicked             = Signal()
+    stop_clicked              = Signal()
+    mode_changed              = Signal(int)
+    custom_args_changed       = Signal(str)
+    autostart_toggled         = Signal(bool)
+    close_choice              = Signal(str)
+    close_preference_changed  = Signal(str)
+    check_update_clicked      = Signal()
+    donate_clicked            = Signal()
+    clear_log_clicked         = Signal()
+    copy_log_clicked          = Signal()
+    about_clicked             = Signal()
+    custom_args_help_clicked  = Signal()
+
+    #: Maximum number of retained lines in the output log. Prevents
+    #: unbounded memory growth during long-running sessions.
+    _LOG_MAX_BLOCKS = 2000
 
     def __init__(self) -> None:
         super().__init__()
@@ -60,6 +69,11 @@ class MainWindow(QMainWindow):
         # so Python doesn't garbage-collect it mid-flight).
         self._height_anim: QPropertyAnimation | None = None
 
+        # Close-behaviour preference (mirror of AppSettings; kept here so
+        # the close event can be handled without a round-trip to the
+        # controller on every close).
+        self._close_preference = "ask"
+
         self._build_ui()
         self._wire_internal_signals()
 
@@ -80,8 +94,8 @@ class MainWindow(QMainWindow):
                 )
                 if res == 0:
                     break
-        except Exception:
-            pass
+        except Exception as exc:
+            log.debug("dark titlebar not applied: %s", exc)
 
     # ------------------------------------------------------------------
     # UI construction
@@ -158,21 +172,15 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(group)
         layout.setContentsMargins(18, 18, 18, 18)
         layout.setSpacing(14)
-        # NOTE: We intentionally do NOT set SetMinimumSize here. That
-        # constraint forced the group to always occupy its full sizeHint,
-        # which pushed the group under the Start/Stop row as soon as the
-        # Custom-arguments row appeared. The layout is now free to flex.
 
-        # ---- Mode label ----
         mode_label = QLabel("Mode")
         mode_label.setObjectName("fieldLabel")
         layout.addWidget(mode_label)
 
-        # ---- Mode cards ----
         self.mode_cards = ModeCardGroup(MODE_PRESETS)
         layout.addWidget(self.mode_cards)
 
-        # ---- Custom args row (in a transparent container) ----
+        # ---- Custom args row (transparent container) ----
         self._custom_args_container = QWidget()
         self._custom_args_container.setObjectName("customArgsContainer")
         self._custom_args_container.setAttribute(Qt.WA_StyledBackground, True)
@@ -230,7 +238,6 @@ class MainWindow(QMainWindow):
         layout.addSpacing(2)
         layout.addWidget(self.autostart_check)
 
-        # Hide custom args by default (Fast mode)
         self._custom_args_container.setVisible(False)
 
         return group
@@ -240,14 +247,19 @@ class MainWindow(QMainWindow):
         row = QHBoxLayout()
         row.setSpacing(12)
 
-        self.start_btn = QPushButton("▶  Start")
-        self.start_btn.setObjectName("startBtn")
+        self.start_btn = AnimatedButton(
+            "▶  Start",
+            active_hex="#a6e3a1",
+            object_name="startBtn",
+        )
         self.start_btn.setMinimumWidth(130)
 
-        self.stop_btn = QPushButton("⏹  Stop")
-        self.stop_btn.setObjectName("stopBtn")
+        self.stop_btn = AnimatedButton(
+            "⏹  Stop",
+            active_hex="#f38ba8",
+            object_name="stopBtn",
+        )
         self.stop_btn.setMinimumWidth(130)
-        self.stop_btn.setEnabled(False)
 
         self._status = StatusPill()
         self._uptime = UptimeChip()
@@ -272,6 +284,8 @@ class MainWindow(QMainWindow):
         self.log_view.setReadOnly(True)
         self.log_view.setMinimumHeight(120)
         self.log_view.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # B4 fix: cap retained blocks to prevent unbounded memory growth.
+        self.log_view.document().setMaximumBlockCount(self._LOG_MAX_BLOCKS)
         layout.addWidget(self.log_view, 1)
 
         btn_row = QHBoxLayout()
@@ -362,14 +376,16 @@ class MainWindow(QMainWindow):
     # Public API
     # ------------------------------------------------------------------
     def set_running_state(self, running: bool) -> None:
+        """Update the visual state of Start/Stop buttons and status pill."""
         if running:
             self._status.set_state("running")
             self._uptime.start()
         else:
             self._status.set_state("stopped")
             self._uptime.stop_and_hide()
-        self.start_btn.setEnabled(not running)
-        self.stop_btn.setEnabled(running)
+
+        self.start_btn.set_active(not running, animate=True)
+        self.stop_btn.set_active(running, animate=True)
 
     # --- Mode ---------------------------------------------------------
     def current_mode_index(self) -> int:
@@ -387,6 +403,11 @@ class MainWindow(QMainWindow):
         self.autostart_check.setChecked(enabled)
         self.autostart_check.blockSignals(False)
 
+    def set_close_preference(self, pref: str) -> None:
+        """Sync the internal close-behaviour mirror with AppSettings."""
+        if pref in ("ask", "exit", "tray"):
+            self._close_preference = pref
+
     # ------------------------------------------------------------------
     def set_custom_args_visible(
         self, visible: bool, animate: bool = True
@@ -394,16 +415,8 @@ class MainWindow(QMainWindow):
         """Show or hide the Custom-arguments row.
 
         When `animate` is True and the window is on screen, the window
-        height is smoothly adjusted so the new content fits without
-        pushing into the Start/Stop row.
-
-        When `animate` is False (e.g. during initial state restore),
-        visibility is flipped and the window only grows if its current
-        height is below the layout's minimum.
+        height is smoothly adjusted so the new content fits.
         """
-        # isHidden() reflects the explicit "want to be visible" flag,
-        # which is what we care about (isVisible() also returns False
-        # when an ancestor is hidden, e.g. before the window is shown).
         currently_visible = not self._custom_args_container.isHidden()
         if currently_visible == visible:
             return
@@ -413,7 +426,6 @@ class MainWindow(QMainWindow):
             self._custom_args_container.setVisible(visible)
             return
 
-        # Measure the layout's preferred height BEFORE the toggle.
         old_hint = central.sizeHint().height()
 
         self._custom_args_container.setVisible(visible)
@@ -421,7 +433,6 @@ class MainWindow(QMainWindow):
         self._settings_group.updateGeometry()
         self.updateGeometry()
 
-        # Force the layout engine to recompute synchronously.
         if central.layout() is not None:
             central.layout().activate()
 
@@ -432,9 +443,6 @@ class MainWindow(QMainWindow):
             return
 
         if not animate:
-            # Just make sure the window is not smaller than the minimum
-            # required by the new content. Never shrink here — respect
-            # whatever size the user had before.
             min_h = max(
                 self.minimumHeight(),
                 self.minimumSizeHint().height(),
@@ -453,37 +461,33 @@ class MainWindow(QMainWindow):
         if self.isMaximized() or self.isFullScreen():
             return
 
-        # Determine the logical "base" height. If a height animation is
-        # already running, trust its intended end value rather than the
-        # current (mid-flight) geometry, so back-to-back toggles still
-        # land on the correct final size.
         base_h = self.height()
-        if self._height_anim is not None and \
-                self._height_anim.state() == QPropertyAnimation.Running:
+        if (self._height_anim is not None
+                and self._height_anim.state() == QPropertyAnimation.Running):
             end_val = self._height_anim.endValue()
             if isinstance(end_val, QRect):
                 base_h = end_val.height()
 
         target_h = base_h + delta
 
-        # Clamp to the screen.
         screen = self.screen() or QApplication.primaryScreen()
         if screen is not None:
             avail = screen.availableGeometry()
             max_h = max(self.minimumHeight(), avail.height() - 40)
-            target_h = max(self.minimumHeight(), min(target_h, max_h))
+            target_h = min(target_h, max_h)
+
+        # B13 fix: never allow a sub-minimum target height.
+        target_h = max(self.minimumHeight(), target_h)
 
         if target_h == base_h:
             return
 
-        # If the window isn't on screen yet, snap directly (no animation).
         if not self.isVisible():
             self.resize(self.width(), target_h)
             return
 
-        # Cancel any in-flight height animation before starting a new one.
-        if self._height_anim is not None and \
-                self._height_anim.state() == QPropertyAnimation.Running:
+        if (self._height_anim is not None
+                and self._height_anim.state() == QPropertyAnimation.Running):
             self._height_anim.stop()
 
         start_geo = self.geometry()
@@ -552,13 +556,21 @@ class MainWindow(QMainWindow):
         cursor.movePosition(QTextCursor.End)
 
         fmt = QTextCharFormat()
-        low = text.lower()
-        if "[error]" in low or "error" in low[:10]:
-            fmt.setForeground(QColor("#f38ba8"))
-        elif "[warn" in low or "warn" in low[:10]:
-            fmt.setForeground(QColor("#f9e2af"))
-        elif text.startswith("───"):
+        stripped_lower = text.lstrip().lower()
+
+        # B11 fix: anchor error/warning matching to explicit prefixes or
+        # bracketed tags — the old heuristic matched any line whose first
+        # ten chars contained "error".
+        if text.startswith("───"):
             fmt.setForeground(QColor("#89b4fa"))
+        elif "[error]" in stripped_lower:
+            fmt.setForeground(QColor("#f38ba8"))
+        elif "[warn" in stripped_lower:
+            fmt.setForeground(QColor("#f9e2af"))
+        elif stripped_lower.startswith(("error", "failed", "fatal")):
+            fmt.setForeground(QColor("#f38ba8"))
+        elif stripped_lower.startswith(("warning", "warn")):
+            fmt.setForeground(QColor("#f9e2af"))
         else:
             fmt.setForeground(QColor("#a6e3a1"))
 
@@ -591,7 +603,22 @@ class MainWindow(QMainWindow):
     # Window close behaviour
     # ------------------------------------------------------------------
     def closeEvent(self, event) -> None:
-        from PySide6.QtWidgets import QMessageBox
+        """Handle the window close action.
+
+        Respects a stored preference ('ask' | 'exit' | 'tray'). When
+        asking, offers a "Remember my choice" checkbox so users don't
+        get interrupted every time.
+        """
+        pref = self._close_preference
+
+        if pref == "exit":
+            self.close_choice.emit("exit")
+            event.accept()
+            return
+        if pref == "tray":
+            self.close_choice.emit("tray")
+            event.ignore()
+            return
 
         box = QMessageBox(self)
         box.setWindowTitle("Exit Options")
@@ -601,13 +628,21 @@ class MainWindow(QMainWindow):
         tray_btn = box.addButton("Minimize to Tray", QMessageBox.AcceptRole)
         cancel_btn = box.addButton("Cancel", QMessageBox.RejectRole)
         box.setDefaultButton(cancel_btn)
+
+        remember = QCheckBox("Remember my choice")
+        box.setCheckBox(remember)
+
         box.exec()
 
         clicked = box.clickedButton()
         if clicked is exit_btn:
+            if remember.isChecked():
+                self.close_preference_changed.emit("exit")
             self.close_choice.emit("exit")
             event.accept()
         elif clicked is tray_btn:
+            if remember.isChecked():
+                self.close_preference_changed.emit("tray")
             self.close_choice.emit("tray")
             event.ignore()
         else:
