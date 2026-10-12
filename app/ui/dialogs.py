@@ -1019,7 +1019,7 @@ class DonateDialog(QDialog):
             "If it helped you browse freely, consider a small donation."
         )
         subtitle.setObjectName("donateSubtitle")
-        subtitle.setFormat(Qt.RichText)
+        subtitle.setTextFormat(Qt.RichText)
         subtitle.setWordWrap(True)
 
         text_col.addWidget(title)
@@ -1079,7 +1079,7 @@ class DonateDialog(QDialog):
             "<b>permanent loss of funds</b>."
         )
         text.setObjectName("warningText")
-        text.setFormat(Qt.RichText)
+        text.setTextFormat(Qt.RichText)
         text.setWordWrap(True)
 
         layout.addWidget(icon, 0, Qt.AlignTop)
