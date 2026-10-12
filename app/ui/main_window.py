@@ -36,7 +36,6 @@ class MainWindow(QMainWindow):
     custom_args_changed       = Signal(str)
     autostart_toggled         = Signal(bool)
     close_choice              = Signal(str)
-    close_preference_changed  = Signal(str)
     check_update_clicked      = Signal()
     donate_clicked            = Signal()
     clear_log_clicked         = Signal()
@@ -68,11 +67,6 @@ class MainWindow(QMainWindow):
         # Animation handle for smooth height changes (kept as attribute
         # so Python doesn't garbage-collect it mid-flight).
         self._height_anim: QPropertyAnimation | None = None
-
-        # Close-behaviour preference (mirror of AppSettings; kept here so
-        # the close event can be handled without a round-trip to the
-        # controller on every close).
-        self._close_preference = "ask"
 
         self._build_ui()
         self._wire_internal_signals()
@@ -403,11 +397,6 @@ class MainWindow(QMainWindow):
         self.autostart_check.setChecked(enabled)
         self.autostart_check.blockSignals(False)
 
-    def set_close_preference(self, pref: str) -> None:
-        """Sync the internal close-behaviour mirror with AppSettings."""
-        if pref in ("ask", "exit", "tray"):
-            self._close_preference = pref
-
     # ------------------------------------------------------------------
     def set_custom_args_visible(
         self, visible: bool, animate: bool = True
@@ -603,23 +592,13 @@ class MainWindow(QMainWindow):
     # Window close behaviour
     # ------------------------------------------------------------------
     def closeEvent(self, event) -> None:
-        """Handle the window close action.
+        """Ask the user what to do when the window close button is pressed.
 
-        Respects a stored preference ('ask' | 'exit' | 'tray'). When
-        asking, offers a "Remember my choice" checkbox so users don't
-        get interrupted every time.
+        Option E: no "remember my choice" — the prompt is always shown.
+        This keeps the behaviour predictable and avoids the previous
+        dead-end where the user could not recover the prompt once it
+        was disabled.
         """
-        pref = self._close_preference
-
-        if pref == "exit":
-            self.close_choice.emit("exit")
-            event.accept()
-            return
-        if pref == "tray":
-            self.close_choice.emit("tray")
-            event.ignore()
-            return
-
         box = QMessageBox(self)
         box.setWindowTitle("Exit Options")
         box.setIcon(QMessageBox.Question)
@@ -629,20 +608,13 @@ class MainWindow(QMainWindow):
         cancel_btn = box.addButton("Cancel", QMessageBox.RejectRole)
         box.setDefaultButton(cancel_btn)
 
-        remember = QCheckBox("Remember my choice")
-        box.setCheckBox(remember)
-
         box.exec()
 
         clicked = box.clickedButton()
         if clicked is exit_btn:
-            if remember.isChecked():
-                self.close_preference_changed.emit("exit")
             self.close_choice.emit("exit")
             event.accept()
         elif clicked is tray_btn:
-            if remember.isChecked():
-                self.close_preference_changed.emit("tray")
             self.close_choice.emit("tray")
             event.ignore()
         else:

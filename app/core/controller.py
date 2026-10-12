@@ -66,9 +66,6 @@ class AppController(QObject):
         self.window.custom_args_changed.connect(self.on_custom_args_changed)
         self.window.autostart_toggled.connect(self.on_autostart_toggled)
         self.window.close_choice.connect(self.on_close_choice)
-        self.window.close_preference_changed.connect(
-            self.on_close_preference_changed
-        )
         self.window.check_update_clicked.connect(self.check_for_updates_manual)
         self.window.donate_clicked.connect(self.show_donate)
         self.window.clear_log_clicked.connect(self.window.clear_log)
@@ -96,7 +93,6 @@ class AppController(QObject):
 
         self.window.set_custom_args(self._saved_custom_args)
         self.window.set_autostart(self._is_autostart_enabled())
-        self.window.set_close_preference(self.settings.close_action)
 
         self._apply_custom_args_state(idx, animate=False)
         self._validate_custom_args()
@@ -395,11 +391,6 @@ class AppController(QObject):
         elif choice == "tray":
             self.window.hide()
             self.tray.show()
-
-    @Slot(str)
-    def on_close_preference_changed(self, pref: str) -> None:
-        self.settings.close_action = pref
-        self.settings.sync()
 
     @Slot()
     def restore_window(self) -> None:

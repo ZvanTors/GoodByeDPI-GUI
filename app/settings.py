@@ -39,18 +39,5 @@ class AppSettings:
     def geometry(self, v) -> None:
         self._s.setValue("geometry", v)
 
-    # --- Close behaviour -----------------------------------------
-    @property
-    def close_action(self) -> str:
-        """One of: 'ask' | 'exit' | 'tray'."""
-        raw = str(self._s.value("close_action", "ask", type=str))
-        return raw if raw in ("ask", "exit", "tray") else "ask"
-
-    @close_action.setter
-    def close_action(self, v: str) -> None:
-        if v not in ("ask", "exit", "tray"):
-            v = "ask"
-        self._s.setValue("close_action", v)
-
     def sync(self) -> None:
         self._s.sync()
