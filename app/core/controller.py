@@ -3,7 +3,7 @@ import logging
 import os
 import subprocess
 
-from PySide6.QtCore import QObject, QProcess, QTimer, QUrl, Slot
+from PySide6.QtCore import QObject, QProcess, QTimer, Qt, QUrl, Slot
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QApplication, QMessageBox, QDialog
 
@@ -81,6 +81,7 @@ class AppController(QObject):
         self.updater.update_available.connect(self.on_update_available)
         self.updater.up_to_date.connect(self.on_up_to_date)
         self.updater.error.connect(self.on_update_error)
+        self.updater.finished.connect(self.on_update_check_finished)
 
     def _restore_state(self) -> None:
         geo = self.settings.geometry
@@ -103,8 +104,6 @@ class AppController(QObject):
             return
         avail = screen.availableGeometry()
         geo = self.window.geometry()
-        # Require a meaningful overlap — a 1px intersection is not
-        # "on screen", it's a broken layout.
         min_visible_px = 100
         inter = avail.intersected(geo)
         if inter.width() < min_visible_px or inter.height() < min_visible_px:
@@ -135,8 +134,6 @@ class AppController(QObject):
             self.settings.custom_args = custom
             self._saved_custom_args = custom
         else:
-            # Never overwrite the saved custom args just because the user
-            # happened to be on Fast/Compatible mode.
             self.settings.custom_args = self._saved_custom_args
 
         self.settings.sync()
@@ -204,11 +201,6 @@ class AppController(QObject):
 
     @Slot()
     def stop(self) -> None:
-        """Request a graceful stop; force-kill after a short grace period.
-
-        Runs entirely on the Qt event loop — no blocking waitForFinished
-        on the UI thread.
-        """
         if not self.is_running or self.process is None:
             return
         if self._stopping:
@@ -237,7 +229,6 @@ class AppController(QObject):
                 text = bytes(data).decode("utf-8", errors="replace").rstrip()
                 self.window.append_log(text)
         except RuntimeError as exc:
-            # Can happen if the C++ object was already deleted.
             log.debug("readAll after process deleted: %s", exc)
 
     def _on_process_finished(self, *_):
@@ -307,12 +298,6 @@ class AppController(QObject):
     # Autostart
     # ------------------------------------------------------------------
     def _is_autostart_enabled(self) -> bool:
-        """Return True only when our exact task exists.
-
-        The old implementation did a substring search on stdout, which
-        matched any task whose name *contained* TASK_NAME (e.g. a
-        leftover ``GoodbyeDPIManager_old``).
-        """
         try:
             r = subprocess.run(
                 ["schtasks", "/query", "/tn", TASK_NAME,
@@ -324,9 +309,6 @@ class AppController(QObject):
                 return False
             first_line = (r.stdout or "").strip().splitlines()[0] \
                 if r.stdout else ""
-            # CSV: "TaskName","Next Run Time","Status"
-            # A substring match on TASK_NAME would still produce false
-            # positives here, so we match the first field exactly.
             return (
                 first_line.startswith(f'"{TASK_NAME}"')
                 or first_line.startswith(f"{TASK_NAME},")
@@ -337,6 +319,9 @@ class AppController(QObject):
 
     @Slot(bool)
     def on_autostart_toggled(self, checked: bool) -> None:
+        # V6 fix: show a wait cursor while schtasks runs so the UI does
+        # not appear frozen for 1–3 seconds.
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             if checked:
                 exe = executable_path()
@@ -379,7 +364,12 @@ class AppController(QObject):
                 f"Unexpected error:\n{exc}",
             )
         finally:
-            self.window.set_autostart(self._is_autostart_enabled())
+            # Query + cursor restore both inside finally so the cursor is
+            # always restored, even on exception paths.
+            try:
+                self.window.set_autostart(self._is_autostart_enabled())
+            finally:
+                QApplication.restoreOverrideCursor()
 
     # ------------------------------------------------------------------
     # Window / Tray
@@ -400,8 +390,6 @@ class AppController(QObject):
 
     @Slot()
     def full_exit(self) -> None:
-        # Give the child process a clean, bounded shutdown so it doesn't
-        # outlive the GUI as an orphan.
         if self.process is not None and self.is_running:
             try:
                 self.process.kill()
@@ -457,7 +445,17 @@ class AppController(QObject):
     # ------------------------------------------------------------------
     @Slot()
     def check_for_updates_manual(self) -> None:
-        self.updater.check_async(manual=True)
+        # I3 fix: switch the button into a busy state as soon as we start.
+        # If a worker is already running (silent or manual), skip — the
+        # existing worker's `finished` signal will reset the busy state.
+        if not self.updater.check_async(manual=True):
+            return
+        self.window.set_check_update_busy(True)
+
+    @Slot()
+    def on_update_check_finished(self) -> None:
+        # Reset the busy state whenever a check completes (any kind).
+        self.window.set_check_update_busy(False)
 
     @Slot(str)
     def on_update_available(self, new_version: str) -> None:

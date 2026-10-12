@@ -3,7 +3,7 @@ import time
 
 from PySide6.QtCore import (
     Qt, QTimer, QPropertyAnimation, QEasingCurve,
-    QObject, Signal, QEvent, Property,
+    QObject, Signal, QEvent, Property, QParallelAnimationGroup,
 )
 from PySide6.QtGui import QColor, QPainter
 from PySide6.QtWidgets import (
@@ -115,8 +115,16 @@ class StatusPill(QFrame):
 # ==================================================================
 # Uptime chip (⏱ 00:00:00)
 # ==================================================================
+_QWIDGETSIZE_MAX = 16777215  # Qt's internal QWIDGETSIZE_MAX
+
+
 class UptimeChip(QFrame):
-    """A small chip showing how long GoodbyeDPI has been running."""
+    """A small chip showing how long GoodbyeDPI has been running.
+
+    V14 / I10: instead of appearing instantly with setVisible(), the chip
+    fades + slides in over ~220 ms when running starts, and fades out
+    when stopping. This keeps the footer layout from jumping.
+    """
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -143,6 +151,12 @@ class UptimeChip(QFrame):
         self._timer.setInterval(1000)
         self._timer.timeout.connect(self._tick)
 
+        self._opacity = QGraphicsOpacityEffect(self)
+        self._opacity.setOpacity(0.0)
+        self.setGraphicsEffect(self._opacity)
+
+        self._anim_group: QParallelAnimationGroup | None = None
+
         self.setStyleSheet("""
             QFrame#uptimeChip {
                 background-color: rgba(137, 180, 250, 0.10);
@@ -160,15 +174,16 @@ class UptimeChip(QFrame):
             }
         """)
 
+    # ------------------------------------------------------------------
     def start(self) -> None:
         self._start_time = time.monotonic()
         self._label.setText("00:00:00")
-        self.setVisible(True)
         self._timer.start()
+        self._animate_in()
 
     def stop_and_hide(self) -> None:
         self._timer.stop()
-        self.setVisible(False)
+        self._animate_out()
 
     def _tick(self) -> None:
         elapsed = int(time.monotonic() - self._start_time)
@@ -178,12 +193,85 @@ class UptimeChip(QFrame):
         minutes, seconds = divmod(rem, 60)
         self._label.setText(f"{hours:02d}:{minutes:02d}:{seconds:02d}")
 
+    # ------------------------------------------------------------------
+    def _stop_current_anim(self) -> None:
+        if self._anim_group is not None:
+            try:
+                self._anim_group.stop()
+            except RuntimeError:
+                pass
+
+    def _animate_in(self) -> None:
+        self._stop_current_anim()
+
+        self.setMaximumWidth(_QWIDGETSIZE_MAX)
+        target_w = max(self.sizeHint().width(), 80)
+
+        self.setVisible(True)
+        self.setMaximumWidth(0)
+        self._opacity.setOpacity(0.0)
+
+        w_anim = QPropertyAnimation(self, b"maximumWidth", self)
+        w_anim.setDuration(220)
+        w_anim.setStartValue(0)
+        w_anim.setEndValue(target_w)
+        w_anim.setEasingCurve(QEasingCurve.OutCubic)
+
+        o_anim = QPropertyAnimation(self._opacity, b"opacity", self)
+        o_anim.setDuration(220)
+        o_anim.setStartValue(0.0)
+        o_anim.setEndValue(1.0)
+
+        group = QParallelAnimationGroup(self)
+        group.addAnimation(w_anim)
+        group.addAnimation(o_anim)
+        group.finished.connect(self._on_anim_in_done)
+        self._anim_group = group
+        group.start()
+
+    def _on_anim_in_done(self) -> None:
+        self.setMaximumWidth(_QWIDGETSIZE_MAX)
+
+    def _animate_out(self) -> None:
+        self._stop_current_anim()
+
+        current_w = max(self.width(), 1)
+
+        w_anim = QPropertyAnimation(self, b"maximumWidth", self)
+        w_anim.setDuration(180)
+        w_anim.setStartValue(current_w)
+        w_anim.setEndValue(0)
+        w_anim.setEasingCurve(QEasingCurve.InCubic)
+
+        o_anim = QPropertyAnimation(self._opacity, b"opacity", self)
+        o_anim.setDuration(180)
+        o_anim.setStartValue(self._opacity.opacity())
+        o_anim.setEndValue(0.0)
+
+        group = QParallelAnimationGroup(self)
+        group.addAnimation(w_anim)
+        group.addAnimation(o_anim)
+        group.finished.connect(self._on_anim_out_done)
+        self._anim_group = group
+        group.start()
+
+    def _on_anim_out_done(self) -> None:
+        self.setVisible(False)
+        self.setMaximumWidth(_QWIDGETSIZE_MAX)
+
 
 # ==================================================================
 # Mode selection — cards instead of a ComboBox
 # ==================================================================
 class ModeCard(QFrame):
-    """A single selectable card representing a DPI mode preset."""
+    """A single selectable card representing a DPI mode preset.
+
+    Interaction is gated by an internal `_interactive` flag instead of
+    Qt's enabled state, because ``setEnabled(False)`` causes Qt to
+    repaint QSS-styled widgets with a de-saturated disabled palette —
+    which we do not want here. The cards should look *identical* in
+    both states; only clicks are blocked while a session is running.
+    """
 
     clicked = Signal(str)
 
@@ -200,6 +288,7 @@ class ModeCard(QFrame):
         super().__init__(parent)
         self._key = key
         self._selected = False
+        self._interactive = True
 
         self.setObjectName("modeCard")
         self.setAttribute(Qt.WA_StyledBackground, True)
@@ -253,6 +342,7 @@ class ModeCard(QFrame):
         layout.addWidget(self._icon_lbl, 0, Qt.AlignTop)
         layout.addLayout(text_col, 1)
 
+    # ------------------------------------------------------------------
     @property
     def key(self) -> str:
         return self._key
@@ -265,12 +355,22 @@ class ModeCard(QFrame):
             return
         self._selected = selected
         self.setProperty("selected", selected)
-        # Only re-polish the card itself; its children already inherit
-        # the "selected" property through the QSS descendant selectors.
         self.style().unpolish(self)
         self.style().polish(self)
 
+    # ------------------------------------------------------------------
+    def set_interactive(self, interactive: bool) -> None:
+        """Enable or disable click handling without touching QSS colors."""
+        self._interactive = interactive
+        self.setCursor(
+            Qt.PointingHandCursor if interactive else Qt.ArrowCursor
+        )
+
+    # ------------------------------------------------------------------
     def mousePressEvent(self, event):
+        if not self._interactive:
+            event.accept()
+            return
         if event.button() == Qt.LeftButton:
             self.clicked.emit(self._key)
         super().mousePressEvent(event)
@@ -322,12 +422,22 @@ class ModeCardGroup(QWidget):
         if changed and emit:
             self.mode_changed.emit(idx)
 
+    # ------------------------------------------------------------------
+    def set_interactive(self, interactive: bool) -> None:
+        """Block or allow clicks on every card without repainting colors."""
+        for card in self._cards:
+            card.set_interactive(interactive)
+
 
 # ==================================================================
 # In-app toast notifications
 # ==================================================================
 class Toast(QFrame):
-    """A small, self-dismissing notification card."""
+    """A small, self-dismissing notification card.
+
+    I4: includes an explicit close (×) button in addition to
+    click-anywhere-to-dismiss.
+    """
 
     dismissed = Signal(object)
 
@@ -363,8 +473,8 @@ class Toast(QFrame):
         """)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(16, 12, 16, 12)
-        layout.setSpacing(12)
+        layout.setContentsMargins(16, 12, 10, 12)
+        layout.setSpacing(10)
 
         icon_lbl = QLabel(icon_text)
         icon_lbl.setStyleSheet(
@@ -381,8 +491,34 @@ class Toast(QFrame):
         )
         msg_lbl.setWordWrap(True)
 
+        close_btn = QPushButton("×")
+        close_btn.setObjectName("toastClose")
+        close_btn.setFixedSize(20, 20)
+        close_btn.setCursor(Qt.PointingHandCursor)
+        close_btn.setToolTip("Dismiss")
+        close_btn.setStyleSheet("""
+            QPushButton#toastClose {
+                background-color: transparent;
+                border: none;
+                color: #6c7086;
+                font-size: 13pt;
+                font-weight: 700;
+                padding: 0;
+                min-width: 0;  max-width: 20px;
+                min-height: 0; max-height: 20px;
+            }
+            QPushButton#toastClose:hover {
+                color: #f38ba8;
+            }
+            QPushButton#toastClose:pressed {
+                color: #eba0ac;
+            }
+        """)
+        close_btn.clicked.connect(self.fade_out)
+
         layout.addWidget(icon_lbl, 0, Qt.AlignTop)
         layout.addWidget(msg_lbl, 1)
+        layout.addWidget(close_btn, 0, Qt.AlignTop)
 
         self._effect = QGraphicsOpacityEffect(self)
         self._effect.setOpacity(0.0)
@@ -424,17 +560,23 @@ class Toast(QFrame):
             self.deleteLater()
 
     def mousePressEvent(self, event):
+        # Click anywhere except the × button dismisses the toast.
         if event.button() == Qt.LeftButton:
             self.fade_out()
         super().mousePressEvent(event)
 
 
 class ToastManager(QObject):
-    """Positions and stacks `Toast` widgets at the bottom-right corner."""
+    """Positions and stacks `Toast` widgets at the bottom-right corner.
+
+    V3: caps the number of simultaneously-visible toasts. When the limit
+    is reached, the oldest toast is removed immediately to make room.
+    """
 
     _MARGIN = 22
     _SPACING = 10
     _MAX_WIDTH = 340
+    _MAX_TOASTS = 3
 
     def __init__(self, host: QWidget):
         super().__init__(host)
@@ -448,6 +590,8 @@ class ToastManager(QObject):
         kind: str = "info",
         duration: int = 3500,
     ) -> None:
+        self._enforce_limit()
+
         toast = Toast(message, kind, duration, self._host)
         toast.dismissed.connect(self._on_dismissed)
 
@@ -462,6 +606,23 @@ class ToastManager(QObject):
         toast.show_animated()
         self._reposition()
 
+    # ------------------------------------------------------------------
+    def _enforce_limit(self) -> None:
+        """Remove the oldest toasts until we're below the limit."""
+        while len(self._toasts) >= self._MAX_TOASTS:
+            oldest = self._toasts.pop(0)
+            try:
+                oldest.dismissed.disconnect(self._on_dismissed)
+            except (RuntimeError, TypeError):
+                pass
+            try:
+                oldest.hide()
+                oldest.setParent(None)
+                oldest.deleteLater()
+            except RuntimeError:
+                pass
+
+    # ------------------------------------------------------------------
     def _on_dismissed(self, toast: Toast) -> None:
         if toast in self._toasts:
             self._toasts.remove(toast)
@@ -493,13 +654,10 @@ class ToastManager(QObject):
 class AnimatedButton(QPushButton):
     """QPushButton whose background colour animates between two palettes.
 
-    Why not just QSS + ``setEnabled``?
-    ----------------------------------
     ``setEnabled(False)`` fires the ``:disabled`` QSS rule instantly, so
-    any color animation would be cut off. This button keeps Qt's enabled
+    any colour animation would be cut off. This button keeps Qt's enabled
     state untouched and uses an internal ``_interactive`` flag to refuse
-    clicks. Its own stylesheet owns both the background and the hover /
-    pressed states, so the animation is never fighting the global theme.
+    clicks.
     """
 
     def __init__(
@@ -533,8 +691,6 @@ class AnimatedButton(QPushButton):
         self.setCursor(Qt.ArrowCursor)
         self._refresh_style()
 
-    # ------------------------------------------------------------------
-    # Animated property
     # ------------------------------------------------------------------
     def _get_bg(self) -> QColor:
         return self._current_bg
@@ -587,7 +743,7 @@ class AnimatedButton(QPushButton):
 
         if (self._current_bg == target
                 and self._anim.state() != QPropertyAnimation.Running):
-            self._refresh_style()   # text color may have changed
+            self._refresh_style()
             return
 
         self._anim.stop()
@@ -598,8 +754,6 @@ class AnimatedButton(QPushButton):
     def is_active(self) -> bool:
         return self._is_active
 
-    # ------------------------------------------------------------------
-    # Interaction guard (replaces Qt's disabled state)
     # ------------------------------------------------------------------
     def mousePressEvent(self, event):
         if not self._interactive:

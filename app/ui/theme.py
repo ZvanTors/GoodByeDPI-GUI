@@ -155,6 +155,12 @@ QLabel#creditBrand   { color: #a6e3a1; font-size: 8.5pt;
 
 /* ================================================================
    Mode cards (replace the old mode ComboBox)
+
+   NOTE: Cards keep their normal colors even while GoodbyeDPI is
+   running. Clicking is blocked via an internal `_interactive` flag
+   on ModeCard — NOT via `setEnabled(False)` — because Qt's disabled
+   palette would repaint the QSS-styled cards with a de-saturated
+   look. This section is therefore identical to the pre-lock state.
 ================================================================ */
 QFrame#modeCard {
     background-color: #1e1e2e;
@@ -246,7 +252,7 @@ QComboBox QAbstractItemView::item {
     border-radius: 6px;
     min-height: 22px;
 }
-/* Disabled style kept as a fallback – no longer used in normal flow */
+/* Disabled input style — used by the readonly arg preview */
 QLineEdit:disabled {
     background-color: #252537;
     color: #6c7086;
@@ -274,21 +280,9 @@ QPushButton:disabled {
     border-color: #313244;
 }
 
-QPushButton#startBtn {
-    background-color: #a6e3a1;
-    color: #11111b;
-    border: none;
-}
-QPushButton#startBtn:hover    { background-color: #b8ecb4; }
-QPushButton#startBtn:pressed  { background-color: #94e2d5; }
-
-QPushButton#stopBtn {
-    background-color: #f38ba8;
-    color: #11111b;
-    border: none;
-}
-QPushButton#stopBtn:hover    { background-color: #eba0ac; }
-QPushButton#stopBtn:pressed  { background-color: #e64553; }
+/* NOTE: #startBtn and #stopBtn are rendered by AnimatedButton, which
+   owns its own stylesheet to keep the color transition smooth.
+   Therefore no `:disabled` rules for them live here. */
 
 QPushButton#updateBtn {
     background-color: #89b4fa;
@@ -304,6 +298,11 @@ QPushButton#updateBtn {
 }
 QPushButton#updateBtn:hover   { background-color: #a5c8ff; }
 QPushButton#updateBtn:pressed { background-color: #74a0e0; }
+/* I3: busy state while an update check is in progress */
+QPushButton#updateBtn:disabled {
+    background-color: #313244;
+    color: #6c7086;
+}
 
 QPushButton#donateBtn {
     background-color: #f38ba8;

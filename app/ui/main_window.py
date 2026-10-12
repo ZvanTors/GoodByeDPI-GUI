@@ -8,7 +8,7 @@ from PySide6.QtGui import (
     QIcon, QColor, QTextCursor, QTextCharFormat,
 )
 from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel,
     QPushButton, QTextEdit, QLineEdit, QCheckBox,
     QGroupBox, QFrame, QSizePolicy, QApplication, QMessageBox,
 )
@@ -64,8 +64,6 @@ class MainWindow(QMainWindow):
 
         self.setMinimumSize(680, 580)
 
-        # Animation handle for smooth height changes (kept as attribute
-        # so Python doesn't garbage-collect it mid-flight).
         self._height_anim: QPropertyAnimation | None = None
 
         self._build_ui()
@@ -99,7 +97,6 @@ class MainWindow(QMainWindow):
         central.setObjectName("centralWidget")
         self.setCentralWidget(central)
 
-        # Toast layer — children of the central widget, positioned manually.
         self._toast_manager = ToastManager(central)
 
         root = QVBoxLayout(central)
@@ -174,23 +171,22 @@ class MainWindow(QMainWindow):
         self.mode_cards = ModeCardGroup(MODE_PRESETS)
         layout.addWidget(self.mode_cards)
 
-        # ---- Custom args row (transparent container) ----
+        # ---- Custom args row ----
+        # V1 fix: use a QGridLayout so the validation row always aligns
+        # with the edit field regardless of DPI / font size. The old
+        # magic numbers (140px label, 154px left margin) broke on
+        # high-DPI displays.
         self._custom_args_container = QWidget()
         self._custom_args_container.setObjectName("customArgsContainer")
         self._custom_args_container.setAttribute(Qt.WA_StyledBackground, True)
 
-        container_layout = QVBoxLayout(self._custom_args_container)
-        container_layout.setContentsMargins(0, 0, 0, 0)
-        container_layout.setSpacing(6)
-
-        # --- Top row: label + edit + help button ---
-        top_row = QHBoxLayout()
-        top_row.setContentsMargins(0, 0, 0, 0)
-        top_row.setSpacing(14)
+        grid = QGridLayout(self._custom_args_container)
+        grid.setContentsMargins(0, 0, 0, 0)
+        grid.setHorizontalSpacing(14)
+        grid.setVerticalSpacing(6)
 
         custom_label = QLabel("Custom arguments")
         custom_label.setObjectName("fieldLabel")
-        custom_label.setFixedWidth(140)
 
         self.custom_args_edit = QLineEdit()
         self.custom_args_edit.setPlaceholderText(
@@ -203,12 +199,6 @@ class MainWindow(QMainWindow):
         self.custom_args_help_btn.setFixedSize(40, 36)
         self.custom_args_help_btn.setToolTip("Show available arguments")
 
-        top_row.addWidget(custom_label)
-        top_row.addWidget(self.custom_args_edit, 1)
-        top_row.addWidget(self.custom_args_help_btn, 0)
-        container_layout.addLayout(top_row)
-
-        # --- Validation status row ---
         self._args_validation_label = QLabel("")
         self._args_validation_label.setObjectName("argsValidation")
         self._args_validation_label.setMinimumHeight(16)
@@ -217,11 +207,15 @@ class MainWindow(QMainWindow):
             Qt.NoTextInteraction
         )
 
-        status_row = QHBoxLayout()
-        status_row.setContentsMargins(154, 0, 0, 0)
-        status_row.setSpacing(0)
-        status_row.addWidget(self._args_validation_label, 1)
-        container_layout.addLayout(status_row)
+        grid.addWidget(custom_label, 0, 0, Qt.AlignTop)
+        grid.addWidget(self.custom_args_edit, 0, 1)
+        grid.addWidget(self.custom_args_help_btn, 0, 2, Qt.AlignTop)
+        grid.addWidget(self._args_validation_label, 1, 1)
+
+        # Column 1 (edit / validation) gets the stretch
+        grid.setColumnStretch(0, 0)
+        grid.setColumnStretch(1, 1)
+        grid.setColumnStretch(2, 0)
 
         layout.addWidget(self._custom_args_container)
 
@@ -278,8 +272,11 @@ class MainWindow(QMainWindow):
         self.log_view.setReadOnly(True)
         self.log_view.setMinimumHeight(120)
         self.log_view.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        # B4 fix: cap retained blocks to prevent unbounded memory growth.
         self.log_view.document().setMaximumBlockCount(self._LOG_MAX_BLOCKS)
+        # V4 partial: unobtrusive placeholder while the log is empty.
+        self.log_view.setPlaceholderText(
+            "No output yet. Press  ▶ Start  to see live output here."
+        )
         layout.addWidget(self.log_view, 1)
 
         btn_row = QHBoxLayout()
@@ -381,6 +378,20 @@ class MainWindow(QMainWindow):
         self.start_btn.set_active(not running, animate=True)
         self.stop_btn.set_active(running, animate=True)
 
+        # V7 fix: lock the mode cards while GoodbyeDPI is running.
+        # Changing mode mid-session has no effect and would only confuse
+        # the user; changes apply on the next Start.
+        self.mode_cards.setEnabled(not running)
+
+    def set_check_update_busy(self, busy: bool) -> None:
+        """I3: visual busy state for the update button."""
+        if busy:
+            self.check_update_btn.setEnabled(False)
+            self.check_update_btn.setText("🔄  Checking…")
+        else:
+            self.check_update_btn.setEnabled(True)
+            self.check_update_btn.setText("🔄  Check for updates")
+
     # --- Mode ---------------------------------------------------------
     def current_mode_index(self) -> int:
         return self.mode_cards.current_index()
@@ -401,11 +412,7 @@ class MainWindow(QMainWindow):
     def set_custom_args_visible(
         self, visible: bool, animate: bool = True
     ) -> None:
-        """Show or hide the Custom-arguments row.
-
-        When `animate` is True and the window is on screen, the window
-        height is smoothly adjusted so the new content fits.
-        """
+        """Show or hide the Custom-arguments row."""
         currently_visible = not self._custom_args_container.isHidden()
         if currently_visible == visible:
             return
@@ -465,7 +472,6 @@ class MainWindow(QMainWindow):
             max_h = max(self.minimumHeight(), avail.height() - 40)
             target_h = min(target_h, max_h)
 
-        # B13 fix: never allow a sub-minimum target height.
         target_h = max(self.minimumHeight(), target_h)
 
         if target_h == base_h:
@@ -547,9 +553,6 @@ class MainWindow(QMainWindow):
         fmt = QTextCharFormat()
         stripped_lower = text.lstrip().lower()
 
-        # B11 fix: anchor error/warning matching to explicit prefixes or
-        # bracketed tags — the old heuristic matched any line whose first
-        # ten chars contained "error".
         if text.startswith("───"):
             fmt.setForeground(QColor("#89b4fa"))
         elif "[error]" in stripped_lower:
@@ -592,13 +595,7 @@ class MainWindow(QMainWindow):
     # Window close behaviour
     # ------------------------------------------------------------------
     def closeEvent(self, event) -> None:
-        """Ask the user what to do when the window close button is pressed.
-
-        Option E: no "remember my choice" — the prompt is always shown.
-        This keeps the behaviour predictable and avoids the previous
-        dead-end where the user could not recover the prompt once it
-        was disabled.
-        """
+        """Ask the user what to do when the window close button is pressed."""
         box = QMessageBox(self)
         box.setWindowTitle("Exit Options")
         box.setIcon(QMessageBox.Question)

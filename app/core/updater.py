@@ -50,6 +50,9 @@ class UpdateChecker(QObject):
     update_available = Signal(str)
     up_to_date = Signal()
     error = Signal()
+    #: Emitted after *any* check finishes (manual or silent). Controllers
+    #: use this to reset busy indicators.
+    finished = Signal()
 
     #: Minimum interval between silent (non-manual) checks, in seconds.
     _SILENT_INTERVAL_S = 60.0
@@ -59,21 +62,20 @@ class UpdateChecker(QObject):
         self._worker: _UpdateWorker | None = None
         self._last_check_ts: float = 0.0
 
-    def check_async(self, manual: bool = False) -> None:
-        """Start a background check. Safe to call repeatedly.
+    def check_async(self, manual: bool = False) -> bool:
+        """Start a background check.
 
-        - Only one worker runs at a time.
-        - Silent (non-manual) checks are rate-limited to avoid hammering
-          GitHub when the user opens/closes the window repeatedly.
+        Returns True if a worker was actually started, False if a check
+        is already running or the call was rate-limited.
         """
         if self._worker is not None and self._worker.isRunning():
-            return
+            return False
 
         now = time.monotonic()
         if (not manual
                 and (now - self._last_check_ts) < self._SILENT_INTERVAL_S):
             log.debug("Silent update check skipped (rate-limited)")
-            return
+            return False
         self._last_check_ts = now
 
         worker = _UpdateWorker(self)
@@ -88,6 +90,8 @@ class UpdateChecker(QObject):
 
         self._worker = worker
         worker.start()
+        return True
 
     def _on_worker_finished(self) -> None:
         self._worker = None
+        self.finished.emit()

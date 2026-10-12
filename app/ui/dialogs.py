@@ -913,6 +913,10 @@ class DonateDialog(QDialog):
 
     The list is driven by ``constants.DONATION_WALLETS`` so it always
     matches ``docs/donate.html``.
+
+    V2 fix: the wallet list lives inside a QScrollArea so it never gets
+    clipped on small or high-DPI screens; the dialog is also capped at
+    85% of the available screen height.
     """
 
     def __init__(self, parent, wallets: list[dict]):
@@ -920,6 +924,14 @@ class DonateDialog(QDialog):
         self.setWindowTitle("Support GoodByeDPI GUI")
         self.setModal(True)
         self.setFixedWidth(560)
+
+        # V2: constrain height to the available screen.
+        screen = QApplication.primaryScreen()
+        if screen is not None:
+            avail = screen.availableGeometry()
+            self.setMaximumHeight(int(avail.height() * 0.85))
+        self.setMinimumHeight(360)
+
         self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
 
         self._wallets = wallets
@@ -983,6 +995,8 @@ class DonateDialog(QDialog):
             }
             QPushButton#donateCloseBtn:hover   { background-color: #a5c8ff; }
             QPushButton#donateCloseBtn:pressed { background-color: #74a0e0; }
+
+            QScrollArea { background: transparent; border: none; }
         """)
 
         root = QVBoxLayout(self)
@@ -991,7 +1005,7 @@ class DonateDialog(QDialog):
 
         root.addLayout(self._build_header())
         root.addWidget(self._build_section_label())
-        root.addWidget(self._build_wallets_list())
+        root.addWidget(self._build_wallets_list(), 1)
         root.addWidget(self._build_warning())
         root.addLayout(self._build_footer())
 
@@ -1034,11 +1048,21 @@ class DonateDialog(QDialog):
         return lbl
 
     # ----------------------------------------------------------------
-    def _build_wallets_list(self) -> QWidget:
+    def _build_wallets_list(self) -> QScrollArea:
+        """V2 fix: scrollable list — never clipped on small screens."""
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setStyleSheet(
+            "QScrollArea { background: transparent; border: none; }"
+        )
+
         container = QWidget()
         container.setStyleSheet("background: transparent;")
         layout = QVBoxLayout(container)
-        layout.setContentsMargins(0, 0, 0, 0)
+        # Small right margin so the scrollbar doesn't overlap the cards.
+        layout.setContentsMargins(0, 0, 4, 0)
         layout.setSpacing(8)
 
         for w in self._wallets:
@@ -1055,7 +1079,10 @@ class DonateDialog(QDialog):
                 continue
             self._rows.append(row)
             layout.addWidget(row)
-        return container
+
+        layout.addStretch()
+        scroll.setWidget(container)
+        return scroll
 
     # ----------------------------------------------------------------
     def _build_warning(self) -> QFrame:
