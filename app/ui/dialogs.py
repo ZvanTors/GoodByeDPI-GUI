@@ -16,6 +16,10 @@ from app.constants import (
     GOODBYEDPI_URL,
     PYSIDE_URL,
     WINDIVERT_URL,
+    WIKI_URL,
+    LANDING_URL,
+    DONATE_PAGE_URL,
+    RELEASES_PAGE,
     DONATION_WALLETS,
 )
 
@@ -269,7 +273,7 @@ class AboutDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("About GoodByeDPI GUI")
         self.setModal(True)
-        self.setFixedWidth(480)
+        self.setFixedWidth(500)
         self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
 
         self.setStyleSheet("""
@@ -316,6 +320,13 @@ class AboutDialog(QDialog):
             }
             QPushButton#aboutGithubBtn:hover   { background-color: #45475a; border-color: #585b70; }
             QPushButton#aboutGithubBtn:pressed { background-color: #585b70; }
+            QPushButton#aboutWikiBtn {
+                background-color: #313244; border: 1px solid #45475a;
+                border-radius: 9px; padding: 10px 18px;
+                color: #cdd6f4; font-weight: 600; min-width: 80px;
+            }
+            QPushButton#aboutWikiBtn:hover   { background-color: #45475a; border-color: #585b70; }
+            QPushButton#aboutWikiBtn:pressed { background-color: #585b70; }
             QPushButton#aboutCloseBtn {
                 background-color: #89b4fa; border: none; border-radius: 9px;
                 padding: 10px 22px; color: #11111b;
@@ -327,8 +338,9 @@ class AboutDialog(QDialog):
 
         root = QVBoxLayout(self)
         root.setContentsMargins(28, 26, 28, 24)
-        root.setSpacing(16)
+        root.setSpacing(14)
         root.addLayout(self._build_header(version))
+        root.addWidget(self._build_links())
         root.addWidget(self._build_powered_by())
         root.addWidget(self._build_credit())
         root.addLayout(self._build_buttons())
@@ -357,6 +369,28 @@ class AboutDialog(QDialog):
         badge.setObjectName("aboutVersion")
         row.addWidget(badge, 0, Qt.AlignTop)
         return row
+
+    def _build_links(self) -> QFrame:
+        frame = QFrame()
+        frame.setObjectName("aboutSection")
+        layout = QVBoxLayout(frame)
+        layout.setContentsMargins(18, 14, 18, 16)
+        layout.setSpacing(10)
+
+        title = QLabel("LINKS")
+        title.setObjectName("aboutSectionTitle")
+        layout.addWidget(title)
+
+        items = [
+            ("GitHub Repository", "Source code & issues", GITHUB_URL),
+            ("Wiki",              "Docs & troubleshooting", WIKI_URL),
+            ("Releases",          "Download latest build", RELEASES_PAGE),
+            ("Website",           "Landing page",          LANDING_URL),
+            ("Donate",            "Support the project",   DONATE_PAGE_URL),
+        ]
+        for name, desc, url in items:
+            layout.addLayout(self._build_item_row(name, desc, url))
+        return frame
 
     def _build_powered_by(self) -> QFrame:
         frame = QFrame()
@@ -430,12 +464,18 @@ class AboutDialog(QDialog):
         github_btn.setCursor(Qt.PointingHandCursor)
         github_btn.clicked.connect(self._open_github)
 
+        wiki_btn = QPushButton("📖  Wiki")
+        wiki_btn.setObjectName("aboutWikiBtn")
+        wiki_btn.setCursor(Qt.PointingHandCursor)
+        wiki_btn.clicked.connect(self._open_wiki)
+
         close_btn = QPushButton("Close")
         close_btn.setObjectName("aboutCloseBtn")
         close_btn.setDefault(True)
         close_btn.clicked.connect(self.accept)
 
         row.addWidget(github_btn)
+        row.addWidget(wiki_btn)
         row.addStretch()
         row.addWidget(close_btn)
         return row
@@ -445,6 +485,12 @@ class AboutDialog(QDialog):
             QDesktopServices.openUrl(QUrl(GITHUB_URL))
         except Exception as exc:
             log.warning("Failed to open GitHub URL: %s", exc)
+
+    def _open_wiki(self) -> None:
+        try:
+            QDesktopServices.openUrl(QUrl(WIKI_URL))
+        except Exception as exc:
+            log.warning("Failed to open Wiki URL: %s", exc)
 
 
 # ----------------------------------------------------------------

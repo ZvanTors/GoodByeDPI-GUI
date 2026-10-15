@@ -29,6 +29,9 @@ AUTHOR_BRAND = "WhiteDNS"
 GOODBYEDPI_URL = "https://github.com/ValdikSS/GoodbyeDPI"
 PYSIDE_URL = "https://pypi.org/project/PySide6/"
 WINDIVERT_URL = "https://www.reqrypt.org/windivert.html"
+WIKI_URL = f"{GITHUB_URL}/wiki"
+LANDING_URL = f"https://{GITHUB_OWNER.lower()}.github.io/{GITHUB_REPO}/"
+DONATE_PAGE_URL = f"{LANDING_URL}donate.html"
 
 # ---------------------------------------------------------------------
 # Donation

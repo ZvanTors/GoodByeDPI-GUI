@@ -24,6 +24,12 @@ class TrayManager(QObject):
 
         self._menu = QMenu()
 
+        self._show_action = QAction("Show Window")
+        self._show_action.triggered.connect(self.restore_requested.emit)
+        self._menu.addAction(self._show_action)
+
+        self._menu.addSeparator()
+
         self._start_action = QAction("▶  Start")
         self._start_action.triggered.connect(self.start_requested.emit)
         self._menu.addAction(self._start_action)

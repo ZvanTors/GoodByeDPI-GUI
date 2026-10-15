@@ -184,10 +184,7 @@ class AppController(QObject):
                 raise RuntimeError("waitForStarted timed out")
         except Exception as exc:
             log.exception("Failed to start GoodbyeDPI: %s", exc)
-            self.is_running = False
-            if self.process is not None:
-                self.process.deleteLater()
-                self.process = None
+            self._reset_after_start_failure()
             QMessageBox.critical(
                 self.window, "Error",
                 "Failed to start GoodbyeDPI.\n"
@@ -246,10 +243,25 @@ class AppController(QObject):
 
     def _on_process_error(self, error) -> None:
         if error == QProcess.FailedToStart:
-            self.is_running = False
-            self._stopping = False
             self.window.append_log("[error] Process failed to start.")
             log.error("QProcess failed to start")
+            self._reset_after_start_failure()
+
+    def _reset_after_start_failure(self) -> None:
+        """Fully restore UI / process state when Start does not succeed."""
+        self.is_running = False
+        self._stopping = False
+        if self.process is not None:
+            try:
+                if self.process.state() != QProcess.NotRunning:
+                    self.process.kill()
+                    self.process.waitForFinished(2000)
+            except RuntimeError:
+                pass
+            self.process.deleteLater()
+            self.process = None
+        self.window.set_running_state(False)
+        self.tray.set_running(False)
 
     # ------------------------------------------------------------------
     # Mode / custom args

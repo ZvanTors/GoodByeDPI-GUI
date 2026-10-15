@@ -17,6 +17,7 @@ from app.constants import APP_VERSION, MODE_PRESETS, LOGO_ICO_REL
 from app.ui.theme import DARK_QSS
 from app.ui.widgets import (
     StatusPill, UptimeChip, ModeCardGroup, ToastManager, AnimatedButton,
+    StatusDot,
 )
 from app.utils import resource_path
 
@@ -305,6 +306,31 @@ class MainWindow(QMainWindow):
         self.check_update_btn.setCursor(Qt.PointingHandCursor)
         self.check_update_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
+        # Compact network / update-check indicator (hidden unless busy).
+        self._net_indicator = QFrame()
+        self._net_indicator.setObjectName("netIndicator")
+        self._net_indicator.setVisible(False)
+        net_row = QHBoxLayout(self._net_indicator)
+        net_row.setContentsMargins(8, 2, 10, 2)
+        net_row.setSpacing(6)
+        self._net_dot = StatusDot()
+        self._net_dot.set_color("#89b4fa")
+        self._net_label = QLabel("")
+        self._net_label.setObjectName("netIndicatorLabel")
+        self._net_label.setStyleSheet(
+            "color:#89b4fa; font-size:9pt; font-weight:600;"
+            " background:transparent;"
+        )
+        net_row.addWidget(self._net_dot, 0, Qt.AlignVCenter)
+        net_row.addWidget(self._net_label, 0, Qt.AlignVCenter)
+        self._net_indicator.setStyleSheet("""
+            QFrame#netIndicator {
+                background-color: rgba(137, 180, 250, 0.10);
+                border: 1px solid rgba(137, 180, 250, 0.28);
+                border-radius: 10px;
+            }
+        """)
+
         self.donate_btn = QPushButton("❤  Donate")
         self.donate_btn.setObjectName("donateBtn")
         self.donate_btn.setCursor(Qt.PointingHandCursor)
@@ -313,6 +339,7 @@ class MainWindow(QMainWindow):
         credit = self._build_credit_badge()
 
         row.addWidget(self.check_update_btn, 0, Qt.AlignVCenter)
+        row.addWidget(self._net_indicator, 0, Qt.AlignVCenter)
         row.addWidget(self.donate_btn, 0, Qt.AlignVCenter)
         row.addStretch()
         row.addWidget(credit, 0, Qt.AlignVCenter)
@@ -378,19 +405,29 @@ class MainWindow(QMainWindow):
         self.start_btn.set_active(not running, animate=True)
         self.stop_btn.set_active(running, animate=True)
 
-        # V7 fix: lock the mode cards while GoodbyeDPI is running.
-        # Changing mode mid-session has no effect and would only confuse
-        # the user; changes apply on the next Start.
-        self.mode_cards.setEnabled(not running)
+        # Lock mode cards without desaturating colors (setEnabled would
+        # apply the disabled QSS palette and look washed-out).
+        self.mode_cards.set_interactive(not running)
+
+        # Custom args have no effect while a session is already running.
+        self.custom_args_edit.setReadOnly(running)
+        self.custom_args_help_btn.setEnabled(not running)
 
     def set_check_update_busy(self, busy: bool) -> None:
-        """I3: visual busy state for the update button."""
+        """Busy state for the update button + network status indicator."""
         if busy:
             self.check_update_btn.setEnabled(False)
             self.check_update_btn.setText("🔄  Checking…")
+            self._net_dot.set_color("#89b4fa")
+            self._net_dot.start_pulse()
+            self._net_label.setText("Checking…")
+            self._net_indicator.setVisible(True)
         else:
             self.check_update_btn.setEnabled(True)
             self.check_update_btn.setText("🔄  Check for updates")
+            self._net_dot.stop_pulse()
+            self._net_label.setText("")
+            self._net_indicator.setVisible(False)
 
     # --- Mode ---------------------------------------------------------
     def current_mode_index(self) -> int:
@@ -417,23 +454,38 @@ class MainWindow(QMainWindow):
         if currently_visible == visible:
             return
 
-        central = self.centralWidget()
-        if central is None:
-            self._custom_args_container.setVisible(visible)
-            return
+        # Use the container's own height (+ parent layout spacing) so the
+        # delta is stable and independent of the Expanding log group's
+        # sizeHint, which previously caused occasional height jumps.
+        spacing = 0
+        parent_layout = self._settings_group.layout()
+        if parent_layout is not None:
+            spacing = parent_layout.spacing()
 
-        old_hint = central.sizeHint().height()
+        if currently_visible:
+            container_h = max(
+                self._custom_args_container.height(),
+                self._custom_args_container.sizeHint().height(),
+            )
+        else:
+            # Temporarily measure while hidden without flashing UI.
+            self._custom_args_container.setVisible(True)
+            self._custom_args_container.adjustSize()
+            container_h = max(
+                self._custom_args_container.sizeHint().height(), 1
+            )
+            self._custom_args_container.setVisible(False)
+
+        delta = (container_h + spacing) if visible else -(container_h + spacing)
 
         self._custom_args_container.setVisible(visible)
         self._custom_args_container.updateGeometry()
         self._settings_group.updateGeometry()
         self.updateGeometry()
 
-        if central.layout() is not None:
+        central = self.centralWidget()
+        if central is not None and central.layout() is not None:
             central.layout().activate()
-
-        new_hint = central.sizeHint().height()
-        delta = new_hint - old_hint
 
         if delta == 0:
             return
@@ -457,12 +509,15 @@ class MainWindow(QMainWindow):
         if self.isMaximized() or self.isFullScreen():
             return
 
+        # If an animation is already running, chain from its end height
+        # so successive show/hide toggles don't jump.
         base_h = self.height()
         if (self._height_anim is not None
                 and self._height_anim.state() == QPropertyAnimation.Running):
             end_val = self._height_anim.endValue()
             if isinstance(end_val, QRect):
                 base_h = end_val.height()
+            self._height_anim.stop()
 
         target_h = base_h + delta
 
@@ -472,7 +527,9 @@ class MainWindow(QMainWindow):
             max_h = max(self.minimumHeight(), avail.height() - 40)
             target_h = min(target_h, max_h)
 
-        target_h = max(self.minimumHeight(), target_h)
+        # Never shrink below the true minimum (avoids negative-height glitches).
+        min_h = max(self.minimumHeight(), self.minimumSizeHint().height())
+        target_h = max(min_h, target_h)
 
         if target_h == base_h:
             return
@@ -481,11 +538,9 @@ class MainWindow(QMainWindow):
             self.resize(self.width(), target_h)
             return
 
-        if (self._height_anim is not None
-                and self._height_anim.state() == QPropertyAnimation.Running):
-            self._height_anim.stop()
-
         start_geo = self.geometry()
+        # Start from the chained base height, not the current (mid-anim) height.
+        start_geo.setHeight(base_h)
         end_geo = QRect(
             start_geo.x(), start_geo.y(),
             start_geo.width(), target_h,
