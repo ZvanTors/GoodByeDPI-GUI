@@ -87,23 +87,24 @@ If your ISP blocks websites using <strong>Deep Packet Inspection (DPI)</strong>,
   <tbody>
     <tr><td>🖥 <strong>Fully Graphical</strong></td><td>No terminal, no scripts — a clean PySide6 GUI</td></tr>
     <tr><td>⚡ <strong>One-Click Start / Stop</strong></td><td>Activate or deactivate DPI circumvention instantly, with smooth button animations</td></tr>
-    <tr><td>🎛 <strong>Mode Cards</strong></td><td>Pick <em>Fast</em> (recommended), <em>Compatible</em>, or <em>Custom</em> from visual cards with badges instead of a dropdown. Cards stay locked while a session is running — change the mode after stopping.</td></tr>
-    <tr><td>🔧 <strong>Custom Arguments</strong></td><td>Advanced users can pass any GoodbyeDPI flags</td></tr>
+    <tr><td>🎛 <strong>Mode Cards</strong></td><td>Pick <em>Fast</em> (recommended), <em>Compatible</em>, or <em>Custom</em> from visual cards with badges instead of a dropdown. While a session is running, cards are locked via <code>set_interactive</code> so colors stay sharp — no washed-out disabled look.</td></tr>
+    <tr><td>🔧 <strong>Custom Arguments</strong></td><td>Advanced users can pass any GoodbyeDPI flags. The field is read-only while a session is running so mid-run edits can't confuse you.</td></tr>
     <tr><td>📖 <strong>Arguments Guide</strong></td><td>Built-in tabbed reference of every GoodbyeDPI flag with a one-click "add" button</td></tr>
-    <tr><td>ℹ️ <strong>About Dialog</strong></td><td>Click the version badge to see the app version, Powered-by libraries, and credits</td></tr>
+    <tr><td>ℹ️ <strong>About Dialog</strong></td><td>Version badge opens a richer About window: useful links (GitHub, Wiki, Releases, Website, Donate), Powered-by libraries, and credits</td></tr>
     <tr><td>✅ <strong>Live Args Validator</strong></td><td>Real-time feedback on custom arguments — catches typos, missing values, and conflicting flags before you start</td></tr>
     <tr><td>🍞 <strong>In-App Toast Notifications</strong></td><td>Friendly, dismissible notifications for actions like copying logs and toggling auto-start. Each toast has an explicit <strong>×</strong> close button, and the stack is capped at 3 to avoid clutter.</td></tr>
-    <tr><td>🎞 <strong>Smooth Window Resize</strong></td><td>Window height animates gracefully when switching to Custom mode</td></tr>
+    <tr><td>🎞 <strong>Smooth Window Resize</strong></td><td>Window height animates cleanly when showing or hiding the Custom arguments row (stable delta, no jump)</td></tr>
     <tr><td>🚀 <strong>Auto-Start with Windows</strong></td><td>Optional Task Scheduler integration (with a wait cursor while Windows updates the task)</td></tr>
     <tr><td>📋 <strong>Color-Coded Live Log</strong></td><td>Errors in red, warnings in yellow, and separators in blue — capped at 2000 lines to keep memory flat</td></tr>
     <tr><td>📦 <strong>Single Portable EXE</strong></td><td>Everything bundled — no installation, no dependencies</td></tr>
-    <tr><td>🌐 <strong>Auto Update Checker</strong></td><td>Notifies you when a new version is available — with a busy indicator on the button while the check runs and a direct download link</td></tr>
+    <tr><td>🌐 <strong>Auto Update Checker</strong></td><td>Notifies you when a new version is available. While checking, the button shows <em>Checking…</em> and a small network status indicator pulses next to it.</td></tr>
     <tr><td>🛡 <strong>Zero Impact</strong></td><td>Doesn't affect games, streaming, or general traffic</td></tr>
-    <tr><td>🔔 <strong>System Tray Support</strong></td><td>Runs quietly in the background with Start / Stop / Exit controls</td></tr>
+    <tr><td>🔔 <strong>System Tray Support</strong></td><td>Runs quietly in the background. Right-click menu: <strong>Show Window</strong>, Start, Stop, status, and Exit. Double-click the icon also restores the window.</td></tr>
     <tr><td>⏱ <strong>Uptime Counter</strong></td><td>Live session timer with a smooth fade-in animation when the session starts</td></tr>
     <tr><td>🎨 <strong>Modern Dark UI</strong></td><td>Catppuccin-inspired theme with background gradient, rounded cards, floating pill titles, and a native dark title bar</td></tr>
     <tr><td>💾 <strong>Persistent Settings</strong></td><td>Window position, mode, and custom arguments remembered between sessions</td></tr>
     <tr><td>📝 <strong>Runtime Logs</strong></td><td>Structured logs written to <code>%APPDATA%\GoodbyeDPIManager\logs\</code> for post-crash diagnostics</td></tr>
+    <tr><td>♻ <strong>Clean Start Failure Recovery</strong></td><td>If GoodbyeDPI fails to start (missing binary, no admin, etc.), the UI fully resets to Stopped — no half-stuck state</td></tr>
   </tbody>
 </table>
 
@@ -147,11 +148,11 @@ Double-click the EXE. Windows will request <strong>administrator privileges</str
 <p>Click <strong>⏹ Stop</strong> when you no longer need the bypass.</p>
 
 <blockquote>
-<p><strong>Tip — Custom arguments:</strong> Click the <strong>?</strong> button next to the Custom arguments field to open the built-in <em>Arguments Guide</em> — 5 tabbed categories, live search, and a one-click <strong>+</strong> to add flags. In the <em>Presets</em> tab, <strong>+</strong> replaces the whole line; in all other tabs it appends. The field also validates your input live (<span style="color:#a6e3a1;">✓</span> / <span style="color:#f9e2af;">⚠</span> / <span style="color:#f38ba8;">✕</span>) and warns you about typos or conflicting options.</p>
+<p><strong>Tip — Custom arguments:</strong> Click the <strong>?</strong> button next to the Custom arguments field to open the built-in <em>Arguments Guide</em> — 5 tabbed categories, live search, and a one-click <strong>+</strong> to add flags. In the <em>Presets</em> tab, <strong>+</strong> replaces the whole line; in all other tabs it appends. The field also validates your input live (<span style="color:#a6e3a1;">✓</span> / <span style="color:#f9e2af;">⚠</span> / <span style="color:#f38ba8;">✕</span>) and warns you about typos or conflicting options. While a session is running the field is <strong>read-only</strong> (edits would not apply until the next Start).</p>
 </blockquote>
 
 <blockquote>
-<p><strong>Tip — Changing modes:</strong> The Mode Cards are <strong>locked while a session is running</strong>. To switch to a different preset, click <strong>⏹ Stop</strong> first, then pick the new card and start again. This prevents mid-session confusion, since changing the mode has no effect until the next Start anyway.</p>
+<p><strong>Tip — Changing modes:</strong> The Mode Cards are <strong>locked while a session is running</strong> (appearance stays the same; only clicks are blocked). To switch to a different preset, click <strong>⏹ Stop</strong> first, then pick the new card and start again.</p>
 </blockquote>
 
 <blockquote>
@@ -159,7 +160,11 @@ Double-click the EXE. Windows will request <strong>administrator privileges</str
 </blockquote>
 
 <blockquote>
-<p><strong>Tray:</strong> Closing the window always asks whether to exit or minimize to the system tray. From the tray you can Start, Stop, or Exit at any time.</p>
+<p><strong>Tray:</strong> Closing the window always asks whether to exit or minimize to the system tray. Right-click the tray icon for <strong>Show Window</strong>, Start, Stop, status, or Exit. Double-click the icon also restores the window.</p>
+</blockquote>
+
+<blockquote>
+<p><strong>About:</strong> Click the version badge in the header to open About — links to GitHub, Wiki, Releases, Website, and Donate, plus Powered-by credits.</p>
 </blockquote>
 
 <blockquote>
@@ -320,7 +325,17 @@ cd GoodByeDPI-GUI</code></pre>
 
 <details>
 <summary><strong>❌ Mode Cards don't respond to clicks</strong></summary>
-<p>The Mode Cards are intentionally <strong>locked while a session is running</strong> — changing the mode has no effect until the next Start. Click <strong>⏹ Stop</strong> first, then pick a new card.</p>
+<p>The Mode Cards are intentionally <strong>locked while a session is running</strong> (they keep their normal colors; only interaction is blocked). Changing the mode has no effect until the next Start. Click <strong>⏹ Stop</strong> first, then pick a new card.</p>
+</details>
+
+<details>
+<summary><strong>❌ Custom arguments field is greyed out / not editable</strong></summary>
+<p>While GoodbyeDPI is running, the Custom arguments field is <strong>read-only</strong> on purpose — changes would not apply until you stop and start again. Stop the session to edit arguments.</p>
+</details>
+
+<details>
+<summary><strong>❌ Window is minimized / I only see the tray icon</strong></summary>
+<p>Right-click the tray icon and choose <strong>Show Window</strong>, or double-click the tray icon to restore the main window.</p>
 </details>
 
 <details>
@@ -335,7 +350,7 @@ cd GoodByeDPI-GUI</code></pre>
 
 <details>
 <summary><strong>❌ Update dialog doesn't appear</strong></summary>
-<p>The update check runs silently in the background. While it runs, the <strong>🔄 Check for updates</strong> button shows a busy state (<em>🔄 Checking…</em>) and is temporarily disabled. Once it finishes, a toast notification will confirm either way — a new version is available, you're up to date, or the check failed (offline).</p>
+<p>The update check runs silently in the background. While it runs, the <strong>🔄 Check for updates</strong> button shows <em>🔄 Checking…</em>, is temporarily disabled, and a small network status indicator pulses next to it. Once it finishes, a toast confirms the result — a new version is available, you're up to date, or the check failed (offline).</p>
 </details>
 
 <details>
