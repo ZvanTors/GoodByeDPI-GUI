@@ -29,6 +29,11 @@ def _log_dir() -> str:
     return path
 
 
+def get_log_dir() -> str:
+    """Public accessor for the log directory (e.g. open-in-Explorer)."""
+    return _log_dir()
+
+
 def get_log_file_path() -> str:
     """Public accessor — used by the About dialog and crash dialogs."""
     return os.path.join(_log_dir(), f"{ORG_NAME}.log")

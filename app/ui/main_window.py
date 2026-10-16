@@ -41,6 +41,7 @@ class MainWindow(QMainWindow):
     donate_clicked            = Signal()
     clear_log_clicked         = Signal()
     copy_log_clicked          = Signal()
+    open_log_folder_clicked   = Signal()
     about_clicked             = Signal()
     custom_args_help_clicked  = Signal()
 
@@ -194,11 +195,11 @@ class MainWindow(QMainWindow):
             "e.g.  -f 2 -e 40 --native-frag --reverse-frag"
         )
 
-        self.custom_args_help_btn = QPushButton("?")
+        self.custom_args_help_btn = QPushButton("📖")
         self.custom_args_help_btn.setObjectName("helpBtn")
         self.custom_args_help_btn.setCursor(Qt.PointingHandCursor)
-        self.custom_args_help_btn.setFixedSize(40, 36)
-        self.custom_args_help_btn.setToolTip("Show available arguments")
+        self.custom_args_help_btn.setFixedSize(44, 36)
+        self.custom_args_help_btn.setToolTip("Open arguments guide")
 
         self._args_validation_label = QLabel("")
         self._args_validation_label.setObjectName("argsValidation")
@@ -282,6 +283,15 @@ class MainWindow(QMainWindow):
 
         btn_row = QHBoxLayout()
         btn_row.setSpacing(8)
+
+        self.open_log_folder_btn = QPushButton("📂  Open log folder")
+        self.open_log_folder_btn.setObjectName("smallBtn")
+        self.open_log_folder_btn.setCursor(Qt.PointingHandCursor)
+        self.open_log_folder_btn.setToolTip(
+            "Open the folder where log files are saved"
+        )
+
+        btn_row.addWidget(self.open_log_folder_btn)
         btn_row.addStretch()
 
         self.clear_log_btn = QPushButton("Clear")
@@ -386,6 +396,9 @@ class MainWindow(QMainWindow):
         self.donate_btn.clicked.connect(self.donate_clicked.emit)
         self.clear_log_btn.clicked.connect(self.clear_log_clicked.emit)
         self.copy_log_btn.clicked.connect(self.copy_log_clicked.emit)
+        self.open_log_folder_btn.clicked.connect(
+            self.open_log_folder_clicked.emit
+        )
         self.custom_args_help_btn.clicked.connect(
             self.custom_args_help_clicked.emit
         )

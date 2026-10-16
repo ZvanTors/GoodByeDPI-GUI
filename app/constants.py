@@ -111,12 +111,11 @@ MODE_PRESETS: List[ModePreset] = [
         title="Fast",
         badge="Recommended",
         icon="⚡",
-        description="Reverse fragmentation + fake SEQ",
+        description="Best for most users",
         args=["-6"],
         tooltip=(
-            "Fast & aggressive bypass (GoodbyeDPI flag: -6).\n"
-            "Uses reverse fragmentation + fake SEQ.\n"
-            "Works for most ISPs."
+            "Recommended for most ISPs.\n"
+            "Stronger bypass (GoodbyeDPI flag: -6)."
         ),
     ),
     ModePreset(
@@ -124,11 +123,11 @@ MODE_PRESETS: List[ModePreset] = [
         title="Compatible",
         badge="Fallback",
         icon="🛡",
-        description="Gentler fragmentation preset",
+        description="Try if Fast has issues",
         args=["-5"],
         tooltip=(
-            "Gentler bypass (GoodbyeDPI flag: -5).\n"
-            "Try this if Fast mode causes issues."
+            "Gentler preset (GoodbyeDPI flag: -5).\n"
+            "Use this if Fast mode causes problems."
         ),
     ),
     ModePreset(
@@ -136,9 +135,9 @@ MODE_PRESETS: List[ModePreset] = [
         title="Custom",
         badge="",
         icon="🔧",
-        description="Your own GoodbyeDPI flags",
+        description="Enter your own flags",
         args=[],
-        tooltip="Enter your own GoodbyeDPI command-line arguments.",
+        tooltip="Type your own GoodbyeDPI command-line arguments.",
     ),
 ]
 

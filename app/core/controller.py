@@ -70,6 +70,7 @@ class AppController(QObject):
         self.window.donate_clicked.connect(self.show_donate)
         self.window.clear_log_clicked.connect(self.window.clear_log)
         self.window.copy_log_clicked.connect(self.copy_log_to_clipboard)
+        self.window.open_log_folder_clicked.connect(self.open_log_folder)
         self.window.about_clicked.connect(self.show_about)
         self.window.custom_args_help_clicked.connect(self.show_custom_args_help)
 
@@ -420,6 +421,18 @@ class AppController(QObject):
 
     # ------------------------------------------------------------------
     @Slot()
+    @Slot()
+    def open_log_folder(self) -> None:
+        try:
+            from app.core.logging_setup import get_log_dir
+            path = get_log_dir()
+            ok = QDesktopServices.openUrl(QUrl.fromLocalFile(path))
+            if not ok:
+                raise OSError(f"openUrl failed for {path}")
+        except Exception as exc:
+            log.exception("open_log_folder failed: %s", exc)
+            self.window.show_toast("Could not open log folder", "error")
+
     def copy_log_to_clipboard(self) -> None:
         text = self.window.copy_log()
         if not text.strip():

@@ -112,26 +112,31 @@ QPushButton#versionBadge:pressed {
 }
 
 /* ================================================================
-   Help button (?) next to Custom arguments
+   Help button (arguments guide) next to Custom arguments
 ================================================================ */
 QPushButton#helpBtn {
-    background-color: #313244;
-    border: 1px solid #45475a;
-    border-radius: 18px;
+    background-color: rgba(137, 180, 250, 0.12);
+    border: 1px solid rgba(137, 180, 250, 0.40);
+    border-radius: 10px;
     color: #89b4fa;
-    font-size: 12pt;
-    font-weight: 800;
+    font-size: 13pt;
+    font-weight: 700;
     padding: 0;
-    min-width: 0;   max-width: 40px;
-    min-height: 0;  max-height: 36px;
+    min-width: 44px;  max-width: 44px;
+    min-height: 36px; max-height: 36px;
 }
 QPushButton#helpBtn:hover {
-    background-color: #45475a;
+    background-color: rgba(137, 180, 250, 0.22);
     border-color: #89b4fa;
     color: #a5c8ff;
 }
 QPushButton#helpBtn:pressed {
-    background-color: #585b70;
+    background-color: rgba(137, 180, 250, 0.32);
+}
+QPushButton#helpBtn:disabled {
+    background-color: #313244;
+    border-color: #45475a;
+    color: #585b70;
 }
 
 /* ================================================================
